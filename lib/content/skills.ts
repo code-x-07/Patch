@@ -36,7 +36,7 @@ export const skills: Skill[] = [
     },
   },
   {
-    id: "S2", name: "Adding and subtracting integers", short: "Add & subtract integers", prereqs: ["S4"],
+    id: "S2", name: "Adding and subtracting integers", short: "Adding integers", prereqs: ["S4"],
     description: "Add and subtract positive and negative whole numbers.",
     lesson: {
       idea: "Adding moves right on the number line; subtracting moves left. Subtracting a negative is the same as adding.",
