@@ -135,3 +135,32 @@ body {
   }
   .motion-decor { display: none !important; }
 }
+
+/* ---------- Map camera: follows the trace on small screens ---------- */
+.camera-stage {
+  position: relative;
+  overflow: hidden;
+  container-type: size;
+  height: var(--camera-h, 300px);
+}
+.camera-map {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100cqw;
+  transform-origin: 0 0;
+  transform: translate(calc(50cqw - var(--z) * var(--cx) * 1cqw), calc(50cqh - var(--z) * var(--cy) * 1cqw)) scale(var(--z));
+  transition: transform var(--dur-hop) var(--ease-in-out);
+}
+@media (min-width: 1024px) {
+  .camera-stage {
+    height: auto;
+    container-type: inline-size;
+    overflow: visible;
+  }
+  .camera-map {
+    position: static;
+    width: 100%;
+    transform: none;
+  }
+}

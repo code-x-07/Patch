@@ -43,6 +43,8 @@ export type DemoState = {
   feedback: Feedback | null;
   probes: ProbeRecord[];
   pendingReason: ProbeRecord["reason"] | null;
+  /** The failed skill the trace is arriving from for the current probe. */
+  pendingFrom: SkillId | null;
   diagnosis: { rootGaps: SkillId[]; uncertain: boolean; unresolved: SkillId[] } | null;
   /** Learner at the end of diagnosis, before repair. */
   diagnosed: Learner | null;
@@ -74,6 +76,7 @@ export function initialState(fast = false): DemoState {
     feedback: null,
     probes: [],
     pendingReason: null,
+    pendingFrom: null,
     diagnosis: null,
     diagnosed: null,
     disputes: [],
@@ -106,6 +109,7 @@ function probeOrFinish(state: DemoState): DemoState {
       feedback: null,
       current: { question: step.question, phase: "probe", role: "probe" },
       pendingReason: step.reason,
+      pendingFrom: traceSource(state, step.skill),
     };
   }
   const learner = { ...state.learner, mastery: applyDiagnosisEstimates(state.learner.mastery, step.derived) };
@@ -117,6 +121,7 @@ function probeOrFinish(state: DemoState): DemoState {
     feedback: null,
     current: null,
     pendingReason: null,
+    pendingFrom: null,
     diagnosis: { rootGaps: step.rootGaps, uncertain: step.uncertain, unresolved: step.unresolved },
   };
 }
@@ -176,7 +181,7 @@ export function reducer(state: DemoState, action: Action): DemoState {
             questionId: question.id,
             correct: r.feedback.correct,
             reason: state.pendingReason ?? "prerequisite",
-            from: traceSource(state, question.skillId),
+            from: state.pendingFrom,
           },
         ];
       }
