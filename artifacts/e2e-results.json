@@ -1,12 +1,15 @@
 {
   "config": {
     "argv": [
-      "/opt/homebrew/Cellar/node/26.7.0/bin/node",
-      "/Users/hemantkushwaha/Patch/node_modules/.bin/playwright",
-      "test"
+      "/Users/arush/.hermes/node/bin/node",
+      "/Users/arush/Coding/Patch/node_modules/.bin/playwright",
+      "test",
+      "learning.spec.ts",
+      "demo.spec.ts",
+      "keyboard.spec.ts"
     ],
-    "configFile": "/Users/hemantkushwaha/Patch/playwright.config.ts",
-    "rootDir": "/Users/hemantkushwaha/Patch/e2e",
+    "configFile": "/Users/arush/Coding/Patch/playwright.config.ts",
+    "rootDir": "/Users/arush/Coding/Patch/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -22,7 +25,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/hemantkushwaha/Patch/test-results",
+        "outputDir": "/Users/arush/Coding/Patch/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -30,7 +33,7 @@
         },
         "id": "",
         "name": "",
-        "testDir": "/Users/hemantkushwaha/Patch/e2e",
+        "testDir": "/Users/arush/Coding/Patch/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -61,90 +64,9 @@
     "updateSourceMethod": "patch",
     "version": "1.63.0",
     "workers": 1,
-    "webServer": {
-      "command": "npm run build && npx next start -p 3200",
-      "url": "http://localhost:3200",
-      "timeout": 240000,
-      "reuseExistingServer": true
-    }
+    "webServer": null
   },
   "suites": [
-    {
-      "title": "a11y.spec.ts",
-      "file": "a11y.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "axe: landing and join",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 120000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 2953,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-03T11:11:18.024Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "aa3ad05f8c0e05077efb-a89f3323f5388e4ebc6a",
-          "file": "a11y.spec.ts",
-          "line": 22,
-          "column": 5
-        },
-        {
-          "title": "axe: every demo stage and Present mode",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 120000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 49935,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-03T11:11:21.783Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "aa3ad05f8c0e05077efb-a2cde1dd4e9b565ce085",
-          "file": "a11y.spec.ts",
-          "line": 29,
-          "column": 5
-        }
-      ]
-    },
     {
       "title": "demo.spec.ts",
       "file": "demo.spec.ts",
@@ -167,12 +89,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 37587,
+                  "duration": 56989,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:12:11.743Z",
+                  "startTime": "2026-10-03T14:11:23.195Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -201,12 +123,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 37484,
+                  "duration": 58532,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:12:49.339Z",
+                  "startTime": "2026-10-03T14:12:20.949Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -235,12 +157,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6151,
+                  "duration": 3167,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:13:26.833Z",
+                  "startTime": "2026-10-03T14:13:19.489Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -277,12 +199,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 37539,
+                  "duration": 58043,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:13:32.999Z",
+                  "startTime": "2026-10-03T14:13:22.671Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -298,13 +220,13 @@
       ]
     },
     {
-      "title": "visual.spec.ts",
-      "file": "visual.spec.ts",
+      "title": "learning.spec.ts",
+      "file": "learning.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [
         {
-          "title": "screenshots and CLS at mobile-375",
+          "title": "individual session: generated preview through trace, mission, transfer and map on mobile",
           "ok": true,
           "tags": [],
           "tests": [
@@ -319,12 +241,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 44673,
+                  "duration": 30276,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:14:10.551Z",
+                  "startTime": "2026-10-03T14:14:20.753Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -332,13 +254,13 @@
               "status": "expected"
             }
           ],
-          "id": "8324bb52c49185e48ff4-b73c371d2afb7e7acb5b",
-          "file": "visual.spec.ts",
-          "line": 62,
-          "column": 7
+          "id": "e0ec79b0c4f511f16424-e0d327a2dad972544f7e",
+          "file": "learning.spec.ts",
+          "line": 11,
+          "column": 5
         },
         {
-          "title": "screenshots and CLS at laptop-1440",
+          "title": "PDF upload and generation errors are recoverable",
           "ok": true,
           "tags": [],
           "tests": [
@@ -353,12 +275,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 45077,
+                  "duration": 340,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:14:55.243Z",
+                  "startTime": "2026-10-03T14:14:51.035Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -366,13 +288,13 @@
               "status": "expected"
             }
           ],
-          "id": "8324bb52c49185e48ff4-91e28117ca4bed3fb7ab",
-          "file": "visual.spec.ts",
-          "line": 62,
-          "column": 7
+          "id": "e0ec79b0c4f511f16424-1ae05aefaf2622ccb050",
+          "file": "learning.spec.ts",
+          "line": 60,
+          "column": 5
         },
         {
-          "title": "Present mode at 1920x1080",
+          "title": "desktop preview and keyboard-only answer work",
           "ok": true,
           "tags": [],
           "tests": [
@@ -387,12 +309,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 38775,
+                  "duration": 616,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:15:40.335Z",
+                  "startTime": "2026-10-03T14:14:51.380Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -400,9 +322,77 @@
               "status": "expected"
             }
           ],
-          "id": "8324bb52c49185e48ff4-d228579d78d0c502e99a",
-          "file": "visual.spec.ts",
-          "line": 84,
+          "id": "e0ec79b0c4f511f16424-657a97fcdcae70b37cbe",
+          "file": "learning.spec.ts",
+          "line": 72,
+          "column": 5
+        },
+        {
+          "title": "real generation route rejects cross-origin and unconfigured/empty requests",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 50,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T14:14:52.003Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e0ec79b0c4f511f16424-7c58f3e01beb7f4b3863",
+          "file": "learning.spec.ts",
+          "line": 90,
+          "column": 5
+        },
+        {
+          "title": "landing keeps both learning and the original demo reachable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 403,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T14:14:52.058Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e0ec79b0c4f511f16424-f86434c70df1446243b1",
+          "file": "learning.spec.ts",
+          "line": 100,
           "column": 5
         }
       ]
@@ -410,8 +400,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-03T11:11:11.727Z",
-    "duration": 307650.12299999996,
+    "startTime": "2026-10-03T14:11:22.932Z",
+    "duration": 209629.74000000002,
     "expected": 9,
     "skipped": 0,
     "unexpected": 0,

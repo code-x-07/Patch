@@ -38,6 +38,8 @@ const sameSet = (a: number[], b: number[]) =>
 function isCorrect(q: Question, optionText: string): boolean {
   const v = q.verify;
   switch (v.type) {
+    case "conceptual":
+      throw new Error("AI-authored conceptual questions need content review, not algebra evaluation.");
     case "num":
       return close(evalNum(algebraToJs(optionText)), evalNum(v.expr));
     case "poly":
