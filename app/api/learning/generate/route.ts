@@ -2,8 +2,9 @@ import { configuredKey, generateCourse, GenerationError } from "@/lib/learning/g
 import { enforceGenerationLimit } from "@/lib/learning/ratelimit";
 
 export const runtime = "nodejs";
+// Vercel Hobby allows at most 300s; generation keeps its own 285s budget inside this.
 export const maxDuration = 300;
-const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_BYTES = 12 * 1024 * 1024;
 let active = false;
 
 export async function POST(request: Request) {
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > MAX_BYTES + 100_000) { await reader.cancel(); throw new GenerationError("Use a PDF smaller than 8 MB.", 413); }
+      if (size > MAX_BYTES + 100_000) { await reader.cancel(); throw new GenerationError("Use a PDF smaller than 12 MB.", 413); }
       chunks.push(value);
     }
     let form: FormData;
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
     if (objective.length > 300 || level.length > 100 || text.length > 60_000) throw new GenerationError("Notes or session details are too long. Paste at most 60,000 characters.", 400);
     let pdf: Buffer | undefined;
     if (file instanceof File && file.size > 0) {
-      if (file.size > MAX_BYTES) throw new GenerationError("Use a PDF smaller than 8 MB.", 413);
+      if (file.size > MAX_BYTES) throw new GenerationError("Use a PDF smaller than 12 MB.", 413);
       pdf = Buffer.from(await file.arrayBuffer());
       if (!file.name.toLowerCase().endsWith(".pdf") || pdf.subarray(0, 5).toString() !== "%PDF-") throw new GenerationError("Upload a valid PDF, or paste text instead.", 400);
     }

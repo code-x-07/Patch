@@ -104,3 +104,24 @@ test("landing keeps both learning and the original demo reachable", async ({ pag
   await expect(page.getByRole("link", { name: "Try the demo" }).first()).toHaveAttribute("href", "/demo");
   await check(page);
 });
+
+test("generated branches have distinct tap targets on mobile", async ({ page }) => {
+  const course = learningFixture();
+  course.skills[2].prerequisites = [{ skillId: "S1", reason: "Shared foundation", origin: "inferred" }];
+  course.skills[3].prerequisites = [{ skillId: "S2", reason: "Compare both measures", origin: "inferred" }, { skillId: "S3", reason: "Compare both measures", origin: "inferred" }];
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.route("**/api/learning/generate", (route) => route.fulfill({ json: { course, sourceName: "Branched map fixture" } }));
+  await page.goto("/learn");
+  await page.getByRole("button", { name: "Use the Software Testing Week 8 text example" }).click();
+  await page.getByRole("button", { name: "Generate my learning path" }).click();
+  await expect(page.getByRole("button", { name: "Start my quiz" })).toBeVisible();
+  const boxes = await page.getByRole("region", { name: "Generated Knowledge Map" }).getByRole("button").evaluateAll((elements) => elements.map((element) => {
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+  }));
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i], b = boxes[j];
+    expect(a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top).toBe(false);
+  }
+  await check(page);
+});
