@@ -60,8 +60,8 @@ export function Meta({ children, className }: { children: ReactNode; className?:
 
 export function Wordmark({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <span className={clsx("inline-flex items-center gap-2 font-display text-xl font-bold tracking-tight", className)}>
-      <svg aria-hidden viewBox="0 0 24 24" className="size-6">
+    <span className={clsx("inline-flex items-center gap-2.5 font-display text-2xl font-bold tracking-tight sm:text-[1.7rem]", className)}>
+      <svg aria-hidden viewBox="0 0 24 24" className="size-8 sm:size-9">
         <circle cx="12" cy="5" r="2.6" fill="none" stroke="var(--color-beam)" strokeWidth="1.8" />
         <circle cx="5.5" cy="18" r="2.6" fill="none" stroke="var(--color-solid)" strokeWidth="1.8" />
         <circle cx="18.5" cy="18" r="2.6" fill="var(--color-root)" />

@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   try {
     sameOrigin(request);
     const body = await request.json().catch(() => ({}));
-    const created = await createClass(String(body?.name ?? ""));
+    const created = await createClass(String(body?.name ?? ""), body?.course ?? undefined);
     return Response.json(created, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     return errorResponse(e);

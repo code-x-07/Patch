@@ -107,3 +107,61 @@ test("live class: teacher creates, student joins and plays the full loop, teache
   await teacher.getByRole("button", { name: "Delete everything" }).click();
   await expect(teacher).toHaveURL(/\/teach$/);
 });
+
+test("live class from uploaded notes: teacher's course is what students play", async ({ browser }) => {
+  test.setTimeout(420_000);
+  const { learningFixture } = await import("../lib/learning/test-fixture");
+  const teacher = await (await browser.newContext()).newPage();
+  const student = await (await browser.newContext({ viewport: { width: 375, height: 812 } })).newPage();
+
+  // Gemini mocked with a synthetic deep course; the real server still validates and stores it.
+  await teacher.route("**/api/learning/generate", (route) => route.fulfill({ json: { course: learningFixture(), sourceName: "Fixture" } }));
+  await teacher.goto("/teach");
+  await teacher.getByLabel("Class name").fill("E2E notes class");
+  await teacher.getByRole("radio", { name: "Paste notes" }).click();
+  await teacher.getByLabel("Notes", { exact: true }).fill("Software testing notes. ".repeat(10));
+  await teacher.getByRole("button", { name: "Create class" }).click();
+  await expect(teacher).toHaveURL(/\/teach\/[0-9a-f-]{36}$/, { timeout: 30_000 });
+  await expect(teacher.getByText("Software testing fixture").first()).toBeVisible();
+  const code = (await teacher.getByLabel(/^Class code/).innerText()).trim();
+
+  await student.goto("/join");
+  await student.getByLabel("Class code").fill(code);
+  await student.getByLabel("First name or nickname").fill("Robo2");
+  await student.getByRole("button", { name: "Join" }).click();
+  await expect(student.getByText(/Waiting for E2E notes class/)).toBeVisible();
+  await teacher.getByRole("button", { name: "Start the quiz" }).click();
+  await expect(student.getByText("Question 1 of 8")).toBeVisible({ timeout: 10_000 });
+
+  const FAIL = ["Selecting test suites", "Coverage comparisons", "Decision coverage", "Decision outcomes", "Statement coverage"];
+  let repaired = false;
+  for (let i = 0; i < 200; i++) {
+    if (await student.getByText("Open my Knowledge Map").count()) break;
+    if (await student.getByText("Root gap confirmed").count()) repaired = true;
+    const main = student.locator("main");
+    if (await main.locator("[role=status] button").count()) { await main.locator("[role=status] button").first().click(); continue; }
+    if (await main.locator("legend").count()) {
+      const text = await main.locator("legend span").nth(1).innerText();
+      const fail = !repaired && FAIL.some((n) => text.startsWith(n));
+      const labels = main.locator("label");
+      for (let j = 0; j < (await labels.count()); j++) {
+        if ((await labels.nth(j).innerText()).includes("proportion of selected items") !== fail) { await labels.nth(j).click(); break; }
+      }
+      await student.getByRole("button", { name: "I'm sure" }).click();
+      await expect(main.locator("[role=status] button")).toBeVisible();
+      continue;
+    }
+    let clicked = false;
+    for (const name of ["TRACE MY GAP", "Start my Root Gap Mission", "I've got it"]) {
+      const b = main.getByRole("button", { name });
+      if ((await b.count()) && (await b.isEnabled())) { await b.click(); clicked = true; break; }
+    }
+    if (!clicked) await student.waitForTimeout(400);
+  }
+  await expect(student.getByText("ROOT GAP DEFEATED")).toBeVisible();
+  await expect(teacher.locator("main")).toContainText("1 of 1 students", { timeout: 10_000 });
+
+  await teacher.getByRole("button", { name: "Delete class data" }).click();
+  await teacher.getByRole("button", { name: "Delete everything" }).click();
+  await expect(teacher).toHaveURL(/\/teach$/);
+});

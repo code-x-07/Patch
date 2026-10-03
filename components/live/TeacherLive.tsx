@@ -3,15 +3,20 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Play, Square, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { DEMO_INFO } from "@/lib/course";
 import type { ClassReport } from "@/lib/demo/classroom";
+import { infoFromPublic } from "@/lib/learning/course";
+import type { Course } from "@/lib/learning/schema";
 import { ApiError, deleteClass, forgetTeacherClass, getDashboard, setClassState, useTeacherClasses } from "@/lib/live/client";
 import type { ClassInfo } from "@/lib/live/types";
+import { CourseProvider } from "../CourseContext";
 import { ClassInsight } from "../teacher/ClassInsight";
 import { Button, buttonClass } from "../ui";
 
 type Dashboard = {
   class: ClassInfo;
+  course: Pick<Course, "title" | "targetSkillId" | "skills"> | null;
   roster: { nickname: string; stage: string; answered: number }[];
   report: ClassReport;
   quizTotal: number;
@@ -40,6 +45,8 @@ export function TeacherLive({ classId }: { classId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const pc = data?.course ?? null;
+  const course = useMemo(() => (pc ? infoFromPublic(pc) : DEMO_INFO), [pc]);
   const host = useSyncExternalStore(noSubscribe, () => window.location.host, () => "");
 
   const teacherKey = held?.teacherKey;
@@ -147,7 +154,10 @@ export function TeacherLive({ classId }: { classId: string }) {
               </p>
             </>
           )}
-          <p className="mt-4 text-lg">
+          <p className="mt-4 text-base text-muted">
+            Topic: <strong className="text-text">{course.title}</strong>
+          </p>
+          <p className="mt-2 text-lg">
             <strong className="font-display text-2xl tabular-nums">{joined}</strong> {joined === 1 ? "student has" : "students have"} joined
 
           </p>
@@ -188,11 +198,13 @@ export function TeacherLive({ classId }: { classId: string }) {
       )}
 
       {data && (
+        <CourseProvider value={course}>
         <ClassInsight
           report={data.report}
           classLabel={`Live class: ${joined} ${joined === 1 ? "student" : "students"}`}
           actions={controls}
         />
+        </CourseProvider>
       )}
     </div>
   );

@@ -96,7 +96,8 @@ async function api<T>(url: string, init: RequestInit & { headers?: Record<string
   return body as T;
 }
 
-export type PlayResponse = { class: ClassInfo; nickname: string; view: LiveView };
+export type PublicCourse = { title: string; objective: string; targetSkillId: string; skills: unknown[] } | null;
+export type PlayResponse = { class: ClassInfo; nickname: string; view: LiveView; course: PublicCourse };
 
 export const joinClass = (code: string, nickname: string) =>
   api<{ token: string; class: ClassInfo; nickname: string }>("/api/join", { method: "POST", body: JSON.stringify({ code, nickname }) });
@@ -108,8 +109,8 @@ export const sendAction = (token: string, action: Action) =>
 
 export const deleteMyData = (token: string) => api<void>("/api/play", { method: "DELETE", headers: { "x-student-token": token } });
 
-export const createClass = (name: string) =>
-  api<{ class: ClassInfo; teacherKey: string }>("/api/classes", { method: "POST", body: JSON.stringify({ name }) });
+export const createClass = (name: string, course?: unknown) =>
+  api<{ class: ClassInfo; teacherKey: string }>("/api/classes", { method: "POST", body: JSON.stringify({ name, course }) });
 
 export const getDashboard = <T,>(id: string, key: string) => api<T>(`/api/classes/${id}`, { headers: { "x-teacher-key": key } });
 

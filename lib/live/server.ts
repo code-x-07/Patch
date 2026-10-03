@@ -1,10 +1,12 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
+import type { CourseDef } from "../course";
 import { classReport, type ClassReport, type Member } from "../demo/classroom";
-import { DEMO_COURSE, initialState, reducer } from "../demo/course";
-import type { Action, DemoState } from "../demo/flow";
-import { QUIZ } from "../demo/script";
+import { DEMO_COURSE } from "../demo/course";
+import { makeFlow, type Action, type DemoState } from "../demo/flow";
+import { toCourseDef } from "../learning/course";
+import { validateCourse, type Course } from "../learning/schema";
 import type { ClassInfo, LiveView } from "./types";
 import { toLiveView } from "./view";
 
@@ -33,7 +35,26 @@ function sameHash(a: string, b: string) {
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O or 1/I
 const newJoinCode = () => Array.from({ length: 6 }, () => CODE_CHARS[randomInt(CODE_CHARS.length)]).join("");
 
-type ClassRow = { id: string; name: string; join_code: string; teacher_key_hash: string; state: ClassInfo["state"] };
+type ClassRow = { id: string; name: string; join_code: string; teacher_key_hash: string; state: ClassInfo["state"]; course: Course | null };
+
+/** The course a class plays: the teacher's uploaded notes, or the built-in algebra course. */
+const courses = new Map<string, { def: CourseDef; flow: ReturnType<typeof makeFlow> }>();
+const DEMO = { def: DEMO_COURSE, flow: makeFlow(DEMO_COURSE) };
+function courseFor(c: Pick<ClassRow, "id" | "course">) {
+  if (!c.course) return DEMO;
+  let hit = courses.get(c.id);
+  if (!hit) {
+    const def = toCourseDef(c.course);
+    courses.set(c.id, (hit = { def, flow: makeFlow(def) }));
+  }
+  return hit;
+}
+
+/** What browsers may know about a class's course: the skill map and lessons, never questions. */
+export type PublicCourse = Pick<Course, "title" | "objective" | "targetSkillId" | "skills"> | null;
+const publicCourse = (c: Pick<ClassRow, "course">): PublicCourse =>
+  c.course ? { title: c.course.title, objective: c.course.objective, targetSkillId: c.course.targetSkillId, skills: c.course.skills } : null;
+const CLASS_COLS = "id, name, join_code, teacher_key_hash, state, course";
 type StudentRow = { id: string; class_id: string; nickname: string; state: DemoState; stage: string; version: number };
 
 const info = (c: ClassRow): ClassInfo => ({ id: c.id, name: c.name, joinCode: c.join_code, state: c.state });
@@ -47,15 +68,23 @@ function fail(error: { message: string; code?: string } | null, what: string): a
 
 // ---------- Teacher ----------
 
-export async function createClass(name: string) {
+export async function createClass(name: string, course?: unknown) {
   const clean = name.trim().slice(0, 60);
   if (!clean) throw new LiveError("Give the class a name, like “Year 10 Maths”.");
+  let validated: Course | null = null;
+  if (course != null) {
+    try {
+      validated = validateCourse(course);
+    } catch {
+      throw new LiveError("That course didn't pass Patch's checks. Generate it again.");
+    }
+  }
   const teacherKey = newToken();
   for (let tries = 0; tries < 5; tries++) {
     const { data, error } = await db()
       .from("classes")
-      .insert({ name: clean, join_code: newJoinCode(), teacher_key_hash: hashToken(teacherKey) })
-      .select("id, name, join_code, teacher_key_hash, state")
+      .insert({ name: clean, join_code: newJoinCode(), teacher_key_hash: hashToken(teacherKey), course: validated })
+      .select(CLASS_COLS)
       .single();
     if (error?.code === "23505") continue; // join code collision: try another
     fail(error, "create class");
@@ -66,7 +95,7 @@ export async function createClass(name: string) {
 
 async function teacherClass(classId: string, teacherKey: string): Promise<ClassRow> {
   if (!/^[0-9a-f-]{36}$/.test(classId)) throw new LiveError("Class not found.", 404);
-  const { data, error } = await db().from("classes").select("id, name, join_code, teacher_key_hash, state").eq("id", classId).maybeSingle();
+  const { data, error } = await db().from("classes").select(CLASS_COLS).eq("id", classId).maybeSingle();
   fail(error, "load class");
   if (!data) throw new LiveError("Class not found. It may have been deleted.", 404);
   if (!teacherKey || !sameHash(hashToken(teacherKey), (data as ClassRow).teacher_key_hash)) {
@@ -77,6 +106,7 @@ async function teacherClass(classId: string, teacherKey: string): Promise<ClassR
 
 export type Dashboard = {
   class: ClassInfo;
+  course: PublicCourse;
   roster: { nickname: string; stage: string; answered: number }[];
   report: ClassReport;
   quizTotal: number;
@@ -102,8 +132,9 @@ export async function dashboard(classId: string, teacherKey: string): Promise<Da
   return {
     class: info(c),
     roster: rows.map((r) => ({ nickname: r.nickname, stage: r.stage, answered: r.state.learner.attempts.length })),
-    report: classReport(members),
-    quizTotal: QUIZ.length,
+    report: classReport(members, courseFor(c).def),
+    quizTotal: courseFor(c).def.quiz.length,
+    course: publicCourse(c),
   };
 }
 
@@ -132,14 +163,14 @@ export async function join(code: string, nickname: string) {
   const nick = nickname.trim().replace(/\s+/g, " ").slice(0, 24);
   if (!/^[A-Z0-9]{6}$/.test(joinCode)) throw new LiveError("Class codes are 6 letters or numbers.");
   if (!nick) throw new LiveError("Add a first name or nickname so your teacher knows it's you.");
-  const { data: c, error } = await db().from("classes").select("id, name, join_code, teacher_key_hash, state").eq("join_code", joinCode).maybeSingle();
+  const { data: c, error } = await db().from("classes").select(CLASS_COLS).eq("join_code", joinCode).maybeSingle();
   fail(error, "find class");
   if (!c) throw new LiveError("No class has that code. Check the code on your teacher's screen.", 404);
   if ((c as ClassRow).state === "finished") throw new LiveError("That class has finished. Ask your teacher for a new code.", 409);
   const token = newToken();
   const { error: insertError } = await db()
     .from("students")
-    .insert({ class_id: c.id, nickname: nick, token_hash: hashToken(token), state: initialState(), stage: "intro" });
+    .insert({ class_id: c.id, nickname: nick, token_hash: hashToken(token), state: courseFor(c as ClassRow).flow.initialState(), stage: "intro" });
   if (insertError?.code === "23505") throw new LiveError("Someone in this class already uses that name. Add an initial, like “Sam K”.", 409);
   fail(insertError, "join");
   return { token, class: info(c as ClassRow), nickname: nick };
@@ -149,7 +180,7 @@ async function student(token: string): Promise<{ s: StudentRow; c: ClassRow }> {
   if (!token) throw new LiveError("Join a class first.", 401);
   const { data, error } = await db()
     .from("students")
-    .select("id, class_id, nickname, state, stage, version, classes (id, name, join_code, teacher_key_hash, state)")
+    .select(`id, class_id, nickname, state, stage, version, classes (${CLASS_COLS})`)
     .eq("token_hash", hashToken(token))
     .maybeSingle();
   fail(error, "load student");
@@ -158,18 +189,19 @@ async function student(token: string): Promise<{ s: StudentRow; c: ClassRow }> {
   return { s, c: classes };
 }
 
-export type PlayResponse = { class: ClassInfo; nickname: string; view: LiveView };
+export type PlayResponse = { class: ClassInfo; nickname: string; view: LiveView; course: PublicCourse };
 
 const STUDENT_ACTIONS = new Set<Action["type"]>(["answer", "continue", "trace", "dispute", "beginMission", "lessonDone", "goto"]);
 
 /** Current view for a student; starts their quiz once the teacher has started the class. */
 export async function play(token: string): Promise<PlayResponse> {
   const { s, c } = await student(token);
+  const { def, flow } = courseFor(c);
   let state = s.state;
   if (c.state !== "lobby" && state.stage === "intro") {
-    state = await save(s, reducer(state, { type: "start" }));
+    state = await save(s, flow.reducer(state, { type: "start" }));
   }
-  return { class: info(c), nickname: s.nickname, view: toLiveView(state, DEMO_COURSE) };
+  return { class: info(c), nickname: s.nickname, view: toLiveView(state, def), course: publicCourse(c) };
 }
 
 export async function act(token: string, action: Action): Promise<PlayResponse> {
@@ -180,9 +212,10 @@ export async function act(token: string, action: Action): Promise<PlayResponse> 
     throw new LiveError("Invalid answer.");
   }
   if (c.state === "lobby") throw new LiveError("Your teacher hasn't started yet.", 409);
-  const next = reducer(s.state, action);
+  const { def, flow } = courseFor(c);
+  const next = flow.reducer(s.state, action);
   const state = next === s.state ? s.state : await save(s, next);
-  return { class: info(c), nickname: s.nickname, view: toLiveView(state, DEMO_COURSE) };
+  return { class: info(c), nickname: s.nickname, view: toLiveView(state, def), course: publicCourse(c) };
 }
 
 /** Optimistic write: the version must match, so double taps can't apply twice. */

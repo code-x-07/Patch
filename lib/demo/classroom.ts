@@ -1,7 +1,7 @@
-import { misconceptions } from "../content/misconceptions";
-import { TARGET_SKILL } from "../content/skills";
 import type { Misconception, SkillId } from "../content/types";
-import { derive, graph, type Learner } from "../engine";
+import type { CourseDef } from "../course";
+import { derive, type Learner } from "../engine";
+import { DEMO_COURSE } from "./course";
 import type { Profile } from "./script";
 import { simulate } from "./simulate";
 
@@ -73,7 +73,9 @@ export type ClassReport = {
 const CLASS_WIDE_THRESHOLD = 0.3;
 
 /** Aggregate class insight from the members' engine attempts. Nothing is hardcoded. */
-export function classReport(members: Member[], target: SkillId = TARGET_SKILL): ClassReport {
+export function classReport(members: Member[], course: Pick<CourseDef, "graph" | "target" | "bank"> = DEMO_COURSE): ClassReport {
+  const { graph, target } = course;
+  const misconceptions = course.bank.misconceptions;
   const classSize = members.length;
   const diagnoses = members.map((m) => ({ m, d: derive(graph, m.diagnosed) }));
 
@@ -116,7 +118,7 @@ export function classReport(members: Member[], target: SkillId = TARGET_SKILL): 
   }
   const misc = [...studentsByMisconception.entries()]
     .map(([id, set]) => ({
-      misconception: misconceptions[id],
+      misconception: misconceptions[id] ?? { id, label: id, message: "", explain: "" },
       students: set.size,
       share: set.size / classSize,
       classWide: set.size / classSize > CLASS_WIDE_THRESHOLD,

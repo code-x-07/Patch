@@ -3,12 +3,11 @@
 import clsx from "clsx";
 import { BookOpen, Check, Crosshair, Maximize2, Minimize2, TriangleAlert, Users, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { formatMath } from "@/lib/content/math";
 import type { SkillId } from "@/lib/content/types";
 import type { ClassReport } from "@/lib/demo/classroom";
 import { byId } from "@/lib/engine/graph";
 import type { Status } from "@/lib/engine/types";
-import { useCourse } from "../CourseContext";
+import { useCourse, useFmt } from "../CourseContext";
 import { MapStage } from "../MapStage";
 import { STATUS } from "../status";
 import { Button } from "../ui";
@@ -181,6 +180,7 @@ function PresentDialog({ onClose, children }: { onClose: () => void; children: R
 
 function Refresher({ root }: { root: SkillId }) {
   const s = useCourse().skillById[root];
+  const formatMath = useFmt();
   return (
     <div id="refresher" className="anim-rise relative mt-4 rounded-card border border-line bg-ink-800/70 p-5">
       <p className="text-lg">{s.lesson.idea}</p>

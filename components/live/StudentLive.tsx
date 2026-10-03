@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, Users } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { APP_NAME } from "@/lib/config";
+import { DEMO_INFO } from "@/lib/course";
+import { infoFromPublic } from "@/lib/learning/course";
+import type { Course } from "@/lib/learning/schema";
 import type { Action } from "@/lib/demo/flow";
 import { ApiError, deleteMyData, getPlay, saveStudentSession, sendAction, useStudentSession, type PlayResponse } from "@/lib/live/client";
+import { CourseProvider } from "../CourseContext";
 import { MapStage } from "../MapStage";
 import { MapView } from "../demo/MapView";
 import { Mission } from "../demo/Mission";
@@ -114,9 +118,13 @@ export function StudentLive() {
     router.replace("/join?left=1");
   }
 
+  // The class's course: built-in algebra, or the teacher's uploaded notes.
+  const pc = data?.course ?? null;
+  const course = useMemo(() => (pc ? infoFromPublic(pc as unknown as Pick<Course, "title" | "targetSkillId" | "skills">) : DEMO_INFO), [pc]);
   const props: StageProps | null = data ? { view: data.view, act, scripted: null, mode: "live", busy } : null;
 
   return (
+    <CourseProvider value={course}>
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 border-b border-line/70 bg-ink-950/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
@@ -182,6 +190,7 @@ export function StudentLive() {
         )}
       </main>
     </div>
+    </CourseProvider>
   );
 }
 
