@@ -3,9 +3,7 @@
     "argv": [
       "/opt/homebrew/Cellar/node/26.7.0/bin/node",
       "/Users/hemantkushwaha/Patch/node_modules/.bin/playwright",
-      "test",
-      "e2e/keyboard.spec.ts",
-      "e2e/demo.spec.ts"
+      "test"
     ],
     "configFile": "/Users/hemantkushwaha/Patch/playwright.config.ts",
     "rootDir": "/Users/hemantkushwaha/Patch/e2e",
@@ -72,6 +70,82 @@
   },
   "suites": [
     {
+      "title": "a11y.spec.ts",
+      "file": "a11y.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "axe: landing and join",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2953,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T11:11:18.024Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "aa3ad05f8c0e05077efb-a89f3323f5388e4ebc6a",
+          "file": "a11y.spec.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "axe: every demo stage and Present mode",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 49935,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T11:11:21.783Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "aa3ad05f8c0e05077efb-a2cde1dd4e9b565ce085",
+          "file": "a11y.spec.ts",
+          "line": 29,
+          "column": 5
+        }
+      ]
+    },
+    {
       "title": "demo.spec.ts",
       "file": "demo.spec.ts",
       "column": 0,
@@ -93,12 +167,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 37807,
+                  "duration": 37587,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:07:11.523Z",
+                  "startTime": "2026-10-03T11:12:11.743Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -127,12 +201,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 37535,
+                  "duration": 37484,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:07:50.535Z",
+                  "startTime": "2026-10-03T11:12:49.339Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -161,12 +235,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6154,
+                  "duration": 6151,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:08:28.081Z",
+                  "startTime": "2026-10-03T11:13:26.833Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -203,12 +277,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 37288,
+                  "duration": 37539,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:08:34.250Z",
+                  "startTime": "2026-10-03T11:13:32.999Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -222,13 +296,123 @@
           "column": 5
         }
       ]
+    },
+    {
+      "title": "visual.spec.ts",
+      "file": "visual.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "screenshots and CLS at mobile-375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 44673,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T11:14:10.551Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-b73c371d2afb7e7acb5b",
+          "file": "visual.spec.ts",
+          "line": 62,
+          "column": 7
+        },
+        {
+          "title": "screenshots and CLS at laptop-1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 45077,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T11:14:55.243Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-91e28117ca4bed3fb7ab",
+          "file": "visual.spec.ts",
+          "line": 62,
+          "column": 7
+        },
+        {
+          "title": "Present mode at 1920x1080",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 38775,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T11:15:40.335Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8324bb52c49185e48ff4-d228579d78d0c502e99a",
+          "file": "visual.spec.ts",
+          "line": 84,
+          "column": 5
+        }
+      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-03T11:07:05.225Z",
-    "duration": 126535.626,
-    "expected": 4,
+    "startTime": "2026-10-03T11:11:11.727Z",
+    "duration": 307650.12299999996,
+    "expected": 9,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

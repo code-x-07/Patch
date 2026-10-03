@@ -53,7 +53,7 @@ export function Victory({ state, dispatch, derived, status }: StageProps) {
             {/* Every beat is laid out from the start and only revealed, so nothing shifts. */}
             {result.rootDefeated && (
               <Reveal on={beat >= 1} anim="anim-stamp">
-                <p className="font-display text-4xl font-extrabold tracking-[0.08em] text-solid sm:text-5xl" style={{ textShadow: "0 0 30px rgb(91 227 166 / 0.35)" }}>
+                <p className="font-display text-4xl font-extrabold tracking-[0.08em] text-solid sm:text-5xl" style={{ textShadow: "var(--text-glow-solid)" }}>
                   ROOT GAP DEFEATED
                 </p>
               </Reveal>
@@ -72,7 +72,7 @@ export function Victory({ state, dispatch, derived, status }: StageProps) {
             )}
             {result.transferVerified && (
               <Reveal on={beat >= 3} anim="anim-stamp">
-                <p className="mt-8 font-display text-3xl font-extrabold tracking-[0.08em] text-beam sm:text-4xl" style={{ textShadow: "0 0 30px rgb(139 203 255 / 0.4)" }}>
+                <p className="mt-8 font-display text-3xl font-extrabold tracking-[0.08em] text-beam sm:text-4xl" style={{ textShadow: "var(--text-glow-beam)" }}>
                   TRANSFER VERIFIED
                 </p>
               </Reveal>

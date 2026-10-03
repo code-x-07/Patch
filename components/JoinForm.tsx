@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { Button } from "./ui";
+import { Button, buttonClass } from "./ui";
 
 /**
  * Live Mode (real classes) needs the database, which this build doesn't have
@@ -70,7 +70,7 @@ export function JoinForm() {
           <p className="mt-2 text-base text-muted">
             Nothing was sent or saved. You can play the full experience, with simulated classmates, in the demo.
           </p>
-          <Link href="/demo" className="mt-4 inline-flex min-h-12 items-center rounded-card bg-beam px-5 font-bold text-ink-950 hover:bg-beam-strong">
+          <Link href="/demo" className={buttonClass({ className: "mt-4" })}>
             Open the demo
           </Link>
         </div>

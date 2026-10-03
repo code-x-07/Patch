@@ -131,7 +131,7 @@ function QuestTrack({ path, status }: { path: SkillId[]; status: Record<SkillId,
                 className="grid size-9 place-items-center rounded-full border-2 transition-[border-color,background-color] duration-[var(--dur-slow)]"
                 style={{ borderColor: meta.color, background: `color-mix(in oklab, ${meta.color} 16%, var(--color-ink-900))` }}
               >
-                <Icon aria-hidden className="size-4" color={meta.color} strokeWidth={2.6} />
+                <Icon aria-hidden className="size-4" style={{ color: meta.color }} strokeWidth={2.6} />
               </span>
               <span className="line-clamp-2 text-[0.72rem] leading-tight font-semibold text-muted sm:text-xs">
                 {skillById[id].short}

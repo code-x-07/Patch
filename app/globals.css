@@ -51,6 +51,9 @@
   --glow-beam: 0 0 0 1px rgb(139 203 255 / 0.35), 0 0 28px rgb(139 203 255 / 0.28);
   --glow-root: 0 0 0 1px rgb(255 79 123 / 0.5), 0 0 36px rgb(255 79 123 / 0.35);
   --glow-solid: 0 0 24px rgb(91 227 166 / 0.3);
+  --text-glow-solid: 0 0 30px rgb(91 227 166 / 0.35);
+  --text-glow-beam: 0 0 30px rgb(139 203 255 / 0.4);
+  --node-core-hi: #1b2645;
   --shadow-panel: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 24px 60px -20px rgb(0 0 0 / 0.7);
 }
 

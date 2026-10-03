@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { HeroTrace } from "@/components/HeroTrace";
-import { Wordmark } from "@/components/ui";
+import { buttonClass, Wordmark } from "@/components/ui";
 import { APP_NAME, TAGLINE } from "@/lib/config";
 
 const LOOP = [
@@ -10,11 +10,6 @@ const LOOP = [
   { name: "Prove", text: "A Boss Fight returns to the original topic with a question the student has never seen." },
   { name: "Master", text: "The Knowledge Map updates, and the teacher sees the class's shared root cause, not thirty scores." },
 ];
-
-const primary =
-  "inline-flex min-h-14 items-center justify-center rounded-card bg-beam px-7 text-lg font-bold text-ink-950 shadow-[var(--glow-beam)] transition-colors duration-[var(--dur-fast)] hover:bg-beam-strong";
-const secondary =
-  "inline-flex min-h-14 items-center justify-center rounded-card border border-line-strong bg-ink-800 px-7 text-lg font-semibold text-text transition-colors duration-[var(--dur-fast)] hover:border-beam hover:bg-ink-700";
 
 export default function Home() {
   return (
@@ -43,10 +38,10 @@ export default function Home() {
               topic.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link href="/demo" className={primary}>
+              <Link href="/demo" className={buttonClass({ size: "lg" })}>
                 Try the demo
               </Link>
-              <Link href="/join" className={secondary}>
+              <Link href="/join" className={buttonClass({ variant: "secondary", size: "lg" })}>
                 Join a class
               </Link>
             </div>

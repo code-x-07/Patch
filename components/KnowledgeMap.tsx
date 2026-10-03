@@ -78,8 +78,8 @@ function KnowledgeMapImpl({
       >
         <defs>
           <radialGradient id="node-core" cx="50%" cy="35%" r="70%">
-            <stop offset="0%" stopColor="#1b2645" />
-            <stop offset="100%" stopColor="#0a1020" />
+            <stop offset="0%" style={{ stopColor: "var(--node-core-hi)" }} />
+            <stop offset="100%" style={{ stopColor: "var(--color-ink-900)" }} />
           </radialGradient>
         </defs>
 
@@ -95,33 +95,34 @@ function KnowledgeMapImpl({
             const repColor = rep ? STATUS[status[e[1]]].color : undefined;
             return (
               <g key={k} style={{ opacity: dim ? 0.12 : 1, transition: "opacity var(--dur-slow) var(--ease-in-out)" }}>
-                <path d={d} stroke="var(--color-line-strong)" strokeWidth={1.4} opacity={isLocal ? 1 : 0.6} />
-                {isLocal && !isTraced && !rep && <path d={d} stroke="var(--color-muted)" strokeWidth={1.6} opacity={0.7} />}
+                <path d={d} style={{ stroke: "var(--color-line-strong)" }} strokeWidth={1.4} opacity={isLocal ? 1 : 0.6} />
+                {isLocal && !isTraced && !rep && <path d={d} style={{ stroke: "var(--color-muted)" }} strokeWidth={1.6} opacity={0.7} />}
                 {rep && (
                   <>
-                    <path d={d} stroke={repColor} strokeWidth={7} opacity={0.14} />
-                    <path d={d} stroke={repColor} strokeWidth={2.4} style={{ transition: "stroke var(--dur-slow)" }} />
+                    <path d={d} style={{ stroke: repColor }} strokeWidth={7} opacity={0.14} />
+                    <path d={d} strokeWidth={2.4} style={{ stroke: repColor, transition: "stroke var(--dur-slow)" }} />
                   </>
                 )}
                 {isTraced && !rep && (
                   <>
-                    <path d={d} stroke="var(--color-beam)" strokeWidth={8} opacity={0.12} />
+                    <path d={d} style={{ stroke: "var(--color-beam)" }} strokeWidth={8} opacity={0.12} />
                     <path
                       d={d}
-                      stroke="var(--color-beam)"
                       strokeWidth={2.2}
                       pathLength={1}
                       strokeDasharray="1"
                       strokeDashoffset={0}
-                      style={active && key(active) === k ? { animation: "draw var(--dur-hop) var(--ease-out) both", ["--len" as string]: 1 } : undefined}
+                      style={{
+                        stroke: "var(--color-beam)",
+                        ...(active && key(active) === k ? { animation: "draw var(--dur-hop) var(--ease-out) both", ["--len" as string]: 1 } : {}),
+                      }}
                     />
                     <path
                       className="motion-decor"
                       d={d}
-                      stroke="var(--color-beam-strong)"
                       strokeWidth={2.2}
                       strokeDasharray="3 21"
-                      style={{ animation: "edge-flow 1.4s linear infinite" }}
+                      style={{ stroke: "var(--color-beam-strong)", animation: "edge-flow 1.4s linear infinite" }}
                     />
                   </>
                 )}
@@ -161,40 +162,40 @@ function KnowledgeMapImpl({
             >
               {interactive && <circle r={24} fill="transparent" />}
               {h != null && h > 0 && (
-                <circle r={R + 4 + h * 13} fill="var(--color-gap)" opacity={0.08 + h * 0.22} />
+                <circle r={R + 4 + h * 13} style={{ fill: "var(--color-gap)" }} opacity={0.08 + h * 0.22} />
               )}
               {pulse === s.id && (
                 <>
-                  <circle r={R + 2} fill="none" stroke="var(--color-root)" strokeWidth={2} className="motion-decor" style={{ transformBox: "fill-box", transformOrigin: "center", animation: "pulse-root 1.8s var(--ease-out) infinite" }} />
-                  <circle r={R + 9} fill="none" stroke="var(--color-root)" strokeWidth={1.2} opacity={0.6} />
+                  <circle r={R + 2} fill="none" strokeWidth={2} className="motion-decor" style={{ stroke: "var(--color-root)", transformBox: "fill-box", transformOrigin: "center", animation: "pulse-root 1.8s var(--ease-out) infinite" }} />
+                  <circle r={R + 9} fill="none" style={{ stroke: "var(--color-root)" }} strokeWidth={1.2} opacity={0.6} />
                 </>
               )}
               <circle
                 className="focus-ring"
                 r={R + 7}
                 fill="none"
-                stroke="var(--color-beam-strong)"
                 strokeWidth={2}
                 opacity={isFocus ? 1 : 0}
-                style={{ transition: "opacity var(--dur-base)" }}
+                style={{ stroke: "var(--color-beam-strong)", transition: "opacity var(--dur-base)" }}
               />
               <circle
                 r={R}
-                fill={filled ? `color-mix(in oklab, ${meta.color} 16%, #0a1020)` : "url(#node-core)"}
-                stroke={meta.color}
                 strokeWidth={st === "root_gap" ? 2.8 : 2}
                 strokeDasharray={dashed ? (st === "inferred_known" ? "5 3" : "3 4") : undefined}
-                style={{ transition: "fill var(--dur-slow) var(--ease-in-out), stroke var(--dur-slow) var(--ease-in-out)" }}
+                style={{
+                  fill: filled ? `color-mix(in oklab, ${meta.color} 16%, var(--color-ink-900))` : "url(#node-core)",
+                  stroke: meta.color,
+                  transition: "fill var(--dur-slow) var(--ease-in-out), stroke var(--dur-slow) var(--ease-in-out)",
+                }}
               />
-              <Icon x={-8} y={-8} width={16} height={16} color={meta.color} strokeWidth={2.6} aria-hidden />
+              <Icon x={-8} y={-8} width={16} height={16} style={{ color: meta.color }} strokeWidth={2.6} aria-hidden />
               {!bare && (
                 <text
                   y={R + 15}
                   textAnchor="middle"
                   fontSize={12.5}
                   fontWeight={isFocus ? 700 : 600}
-                  fill={dim ? "var(--color-faint)" : "var(--color-text)"}
-                  stroke="var(--color-ink-950)"
+                  style={{ fill: dim ? "var(--color-faint)" : "var(--color-text)", stroke: "var(--color-ink-950)" }}
                   strokeWidth={4}
                   paintOrder="stroke"
                   strokeLinejoin="round"

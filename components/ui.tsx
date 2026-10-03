@@ -13,6 +13,18 @@ const variants: Record<Variant, string> = {
   danger: "border border-gap/60 bg-gap/10 text-gap font-semibold hover:bg-gap/20",
 };
 
+/** Shared button classes, so links that look like buttons can't drift from Button. */
+export function buttonClass({ variant = "primary", size = "md", className }: { variant?: Variant; size?: "sm" | "md" | "lg"; className?: string } = {}) {
+  return clsx(
+    "inline-flex cursor-pointer items-center justify-center gap-2 rounded-card transition-[background-color,border-color,color,transform,box-shadow] duration-[var(--dur-fast)] ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100",
+    size === "sm" && "min-h-10 px-3.5 text-sm",
+    size === "md" && "min-h-12 px-5 text-base",
+    size === "lg" && "min-h-14 px-7 text-lg",
+    variants[variant],
+    className,
+  );
+}
+
 export function Button({
   variant = "primary",
   size = "md",
@@ -32,14 +44,7 @@ export function Button({
       type="button"
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={clsx(
-        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-card transition-[background-color,border-color,color,transform,box-shadow] duration-[var(--dur-fast)] ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100",
-        size === "sm" && "min-h-10 px-3.5 text-sm",
-        size === "md" && "min-h-12 px-5 text-base",
-        size === "lg" && "min-h-14 px-7 text-lg",
-        variants[variant],
-        className,
-      )}
+      className={buttonClass({ variant, size, className })}
       {...rest}
     >
       {loading && <Loader2 aria-hidden className="size-4 animate-spin" />}
