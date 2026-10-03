@@ -1,0 +1,22 @@
+{
+  "landing@mobile-375": {
+    "viewport": "375x812",
+    "value": 0,
+    "shifts": 0
+  },
+  "demo-flow@mobile-375": {
+    "viewport": "375x812",
+    "value": 0,
+    "shifts": 0
+  },
+  "landing@laptop-1440": {
+    "viewport": "1440x900",
+    "value": 0,
+    "shifts": 0
+  },
+  "demo-flow@laptop-1440": {
+    "viewport": "1440x900",
+    "value": 0,
+    "shifts": 0
+  }
+}

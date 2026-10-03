@@ -50,42 +50,58 @@ export function Victory({ state, dispatch, derived, status }: StageProps) {
           </>
         ) : (
           <>
-            {result.rootDefeated && beat >= 1 && (
-              <p className="anim-stamp font-display text-4xl font-extrabold tracking-[0.08em] text-solid sm:text-5xl" style={{ textShadow: "0 0 30px rgb(91 227 166 / 0.35)" }}>
-                ROOT GAP DEFEATED
-              </p>
+            {/* Every beat is laid out from the start and only revealed, so nothing shifts. */}
+            {result.rootDefeated && (
+              <Reveal on={beat >= 1} anim="anim-stamp">
+                <p className="font-display text-4xl font-extrabold tracking-[0.08em] text-solid sm:text-5xl" style={{ textShadow: "0 0 30px rgb(91 227 166 / 0.35)" }}>
+                  ROOT GAP DEFEATED
+                </p>
+              </Reveal>
             )}
-            {beat >= 2 && plan && (
-              <ul className="anim-rise mt-6 grid gap-2" aria-label="Repair path">
-                {path.map((id) => (
-                  <li key={id} className="flex items-center justify-between gap-3 rounded-card bg-ink-900/70 px-4 py-2.5">
-                    <span className="font-semibold">{skillById[id].name}</span>
-                    {rising(id) ? <StatusChip status="suspect" label="Rising" /> : <StatusChip status={status[id]} />}
-                  </li>
-                ))}
-              </ul>
+            {plan && (
+              <Reveal on={beat >= 2}>
+                <ul className="mt-6 grid gap-2" aria-label="Repair path">
+                  {path.map((id) => (
+                    <li key={id} className="flex items-center justify-between gap-3 rounded-card bg-ink-900/70 px-4 py-2.5">
+                      <span className="font-semibold">{skillById[id].name}</span>
+                      {rising(id) ? <StatusChip status="suspect" label="Rising" /> : <StatusChip status={status[id]} />}
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
             )}
-            {result.transferVerified && beat >= 3 && (
-              <p className="anim-stamp mt-8 font-display text-3xl font-extrabold tracking-[0.08em] text-beam sm:text-4xl" style={{ textShadow: "0 0 30px rgb(139 203 255 / 0.4)" }}>
-                TRANSFER VERIFIED
-              </p>
+            {result.transferVerified && (
+              <Reveal on={beat >= 3} anim="anim-stamp">
+                <p className="mt-8 font-display text-3xl font-extrabold tracking-[0.08em] text-beam sm:text-4xl" style={{ textShadow: "0 0 30px rgb(139 203 255 / 0.4)" }}>
+                  TRANSFER VERIFIED
+                </p>
+              </Reveal>
             )}
-            {beat >= 3 && (
-              <p className="anim-rise mt-4 max-w-xl text-base text-muted">
+            <Reveal on={beat >= 3}>
+              <p className="mt-4 max-w-xl text-base text-muted">
                 You solved new {lc(skillById[plan!.target].short)} questions on your own, sure each time. That proves the fix carried
                 over today. The skills in between still need their own checks before they turn solid, and lasting memory needs a
                 check on a later day.
               </p>
-            )}
+            </Reveal>
           </>
         )}
-        {beat >= 3 && (
-          <div className="anim-rise mt-8 flex flex-col gap-3 sm:flex-row">
+        <Reveal on={beat >= 3}>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button size="lg" onClick={() => dispatch({ type: "goto", stage: "map" })}>Open my Knowledge Map</Button>
             <Button size="lg" variant="secondary" onClick={() => dispatch({ type: "goto", stage: "teacher" })}>See the teacher view</Button>
           </div>
-        )}
+        </Reveal>
       </section>
+    </div>
+  );
+}
+
+/** Keeps its space while hidden (no layout shift); plays its entrance when shown. */
+function Reveal({ on, anim = "anim-rise", children }: { on: boolean; anim?: string; children: React.ReactNode }) {
+  return (
+    <div className={on ? anim : "invisible"} aria-hidden={!on || undefined} inert={!on || undefined}>
+      {children}
     </div>
   );
 }

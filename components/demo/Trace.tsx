@@ -54,11 +54,11 @@ export function Trace({ state, dispatch, derived, status, follow }: StageProps) 
             traced={traced}
             active={arriving}
             camera={focus}
-            zoom={1.65}
-            height={290}
+            zoom={1.35}
+            height={320}
             label="Knowledge Map: tracing back from solving quadratics"
           />
-          <p className="pointer-events-none absolute top-3 left-4 text-sm font-semibold text-beam lg:top-6 lg:left-6" aria-live="polite">
+          <p className="pointer-events-none absolute top-0 right-0 left-0 bg-gradient-to-b from-ink-950 via-ink-950/80 to-transparent px-4 pt-3 pb-6 text-sm font-semibold text-beam lg:top-4 lg:left-4 lg:bg-none lg:p-2" aria-live="polite">
             {opening ? `Following the trail back from ${lc(skillById[TARGET_SKILL].name)}…` : `Tracing · question ${n} of about ${Math.max(n, about)}`}
           </p>
         </div>

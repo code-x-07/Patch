@@ -230,7 +230,9 @@ function Distribution({ report, large }: { report: ClassReport; large: boolean }
           </li>
         ))}
       </ul>
-      <table className="sr-only">
+      {/* sr-only can't shrink a table, so hide a wrapper instead. */}
+      <div className="sr-only">
+      <table>
         <caption>Root gap distribution</caption>
         <tbody>
           {report.distribution.map((d) => (
@@ -238,6 +240,7 @@ function Distribution({ report, large }: { report: ClassReport; large: boolean }
           ))}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }
