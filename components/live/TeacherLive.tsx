@@ -1,16 +1,13 @@
 "use client";
 
-import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Play, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { skillById } from "@/lib/content/skills";
 import type { ClassReport } from "@/lib/demo/classroom";
 import { ApiError, deleteClass, forgetTeacherClass, getDashboard, setClassState, useTeacherClasses } from "@/lib/live/client";
 import type { ClassInfo } from "@/lib/live/types";
 import { ClassInsight } from "../teacher/ClassInsight";
-import { STATUS } from "../status";
 import { Button, buttonClass } from "../ui";
 
 type Dashboard = {
@@ -115,7 +112,6 @@ export function TeacherLive({ classId }: { classId: string }) {
 
   const state = data?.class.state ?? "lobby";
   const joined = data?.roster.length ?? 0;
-  const s = data?.report.status;
 
   const controls = (
     <>
@@ -153,45 +149,25 @@ export function TeacherLive({ classId }: { classId: string }) {
           )}
           <p className="mt-4 text-lg">
             <strong className="font-display text-2xl tabular-nums">{joined}</strong> {joined === 1 ? "student has" : "students have"} joined
-            {state === "lobby" && joined === 0 && <span className="text-muted">. Start unlocks when someone joins.</span>}
+
           </p>
         </div>
 
         <div className="rounded-panel border border-line bg-ink-900/70 p-6">
-          <h2 className="text-lg font-bold">Class status</h2>
-          {s && (
-            <ul className="mt-3 grid grid-cols-3 gap-3">
-              {([["Strong", s.strong, "known"], ["Developing", s.developing, "suspect"], ["Needs support", s.needsSupport, "gap"]] as const).map(([label, n, st]) => {
-                const Icon = STATUS[st].icon;
-                return (
-                  <li key={label} className="rounded-card bg-ink-800/70 p-3">
-                    <p className={clsx("flex items-center gap-1.5 text-sm font-semibold", STATUS[st].text)}>
-                      <Icon aria-hidden className="size-4" /> {label}
-                    </p>
-                    <p className="mt-1 font-display text-3xl font-bold tabular-nums">{n}</p>
-                  </li>
-                );
-              })}
+          <h2 className="text-lg font-bold">Students</h2>
+          {data && data.roster.length > 0 ? (
+            <ul className="mt-3 grid max-h-72 gap-1.5 overflow-y-auto text-sm" aria-label="Where each student is (your screen only)">
+              {data.roster.map((r) => (
+                <li key={r.nickname} className="flex justify-between gap-3 border-t border-line pt-1.5">
+                  <span className="truncate">{r.nickname}</span>
+                  <span className="text-muted">{STAGE_LABEL[r.stage] ?? r.stage}</span>
+                </li>
+              ))}
             </ul>
+          ) : (
+            <p className="mt-2 text-muted">No one yet.</p>
           )}
-          {data?.report.recommendation && (
-            <p className="mt-4 text-base text-muted">
-              Most common issue: <strong className="text-text">{skillById[data.report.recommendation.root].name}</strong>
-            </p>
-          )}
-          {data && data.roster.length > 0 && (
-            <details className="mt-4">
-              <summary className="min-h-10 cursor-pointer text-sm font-semibold text-muted">Who&apos;s where (your screen only, not for projecting)</summary>
-              <ul className="mt-2 grid gap-1.5 text-sm">
-                {data.roster.map((r) => (
-                  <li key={r.nickname} className="flex justify-between gap-3 border-t border-line pt-1.5">
-                    <span className="truncate">{r.nickname}</span>
-                    <span className="text-muted">{STAGE_LABEL[r.stage] ?? r.stage}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
+          <p className="mt-3 text-xs text-faint">Not shown in Present mode.</p>
         </div>
       </section>
 
@@ -215,7 +191,6 @@ export function TeacherLive({ classId }: { classId: string }) {
         <ClassInsight
           report={data.report}
           classLabel={`Live class: ${joined} ${joined === 1 ? "student" : "students"}`}
-          intro="Computed from your students' real answers, updated every 2 seconds. Present mode shows class totals only, never individual students."
           actions={controls}
         />
       )}

@@ -30,7 +30,6 @@ export function Teacher({ state, dispatch, runtime }: DemoOnlyProps) {
     <ClassInsight
       report={report}
       classLabel={`Simulated class: ${CLASSMATES.length} simulated classmates${state.diagnosed ? " + you" : ""}`}
-      intro="Every number here is computed from the same engine attempts as your own run. No individual weaknesses are shown on this screen."
       actions={<Button variant="secondary" onClick={() => dispatch({ type: "goto", stage: "map" })}>Back to my map</Button>}
     />
   );

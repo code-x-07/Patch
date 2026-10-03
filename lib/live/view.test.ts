@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { initialState, reducer, type DemoState } from "../demo/flow";
+import { DEMO_COURSE, initialState, reducer } from "../demo/course";
+import type { DemoState } from "../demo/flow";
 import { DEMO_STUDENT, scriptedAnswer } from "../demo/script";
 import { toLiveView } from "./view";
 
@@ -22,7 +23,7 @@ describe("live view projection", () => {
   it("never includes answer flags or misconception tags for an unanswered question", () => {
     let checked = 0;
     for (const s of run()) {
-      const v = toLiveView(s);
+      const v = toLiveView(s, DEMO_COURSE);
       if (v.current && !v.feedback) {
         checked++;
         for (const o of v.current.question.options) {
@@ -37,7 +38,7 @@ describe("live view projection", () => {
 
   it("reveals the answer key for a question only after it was answered", () => {
     for (const s of run()) {
-      const v = toLiveView(s);
+      const v = toLiveView(s, DEMO_COURSE);
       if (v.current && v.feedback) {
         expect(v.current.question.options.filter((o) => o.correct === true)).toHaveLength(1);
         return;
@@ -48,7 +49,7 @@ describe("live view projection", () => {
 
   it("never exposes upcoming mission or Boss Fight questions", () => {
     for (const s of run()) {
-      const json = JSON.stringify(toLiveView(s));
+      const json = JSON.stringify(toLiveView(s, DEMO_COURSE));
       for (const q of s.mission?.plan.practice ?? []) {
         if (!s.learner.attempts.some((a) => a.questionId === q.id) && s.current?.question.id !== q.id) {
           expect(json).not.toContain(`"${q.id}"`);
@@ -60,7 +61,7 @@ describe("live view projection", () => {
 
   it("carries the Fight Report, reveal evidence and result", () => {
     const states = [...run()];
-    const last = toLiveView(states.at(-1)!);
+    const last = toLiveView(states.at(-1)!, DEMO_COURSE);
     expect(last.report?.total).toBe(8);
     expect(last.reveal?.chain).toEqual(["S17", "S13", "S10", "S9", "S8", "S3"]);
     expect(last.result).toEqual({ rootDefeated: true, transferVerified: true, needsTeacher: false });

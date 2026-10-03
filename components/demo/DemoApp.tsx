@@ -61,7 +61,7 @@ export function DemoApp() {
   }, [stage]);
 
   // The demo builds the same projected view the server sends in Live Mode, so both share every screen.
-  const view = useMemo(() => (runtime && state ? runtime.toLiveView(state) : null), [runtime, state]);
+  const view = useMemo(() => (runtime && state ? runtime.toLiveView(state, runtime.DEMO_COURSE) : null), [runtime, state]);
   const loopIndex = LOOP.findIndex((l) => l.stages.includes(stage));
   const scripted =
     runtime && follow && state?.current && !state.feedback

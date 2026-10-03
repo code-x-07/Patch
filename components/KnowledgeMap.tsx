@@ -1,10 +1,11 @@
 "use client";
 
 import clsx from "clsx";
-import { memo, type KeyboardEvent } from "react";
-import { labelLines, layout, MAP_H, MAP_W } from "@/lib/content/layout";
-import { skillById, skills } from "@/lib/content/skills";
+import { memo, useMemo, type KeyboardEvent } from "react";
+import { labelLines } from "@/lib/content/layout";
 import type { SkillId } from "@/lib/content/types";
+import type { CourseInfo } from "@/lib/course";
+import { useCourse } from "./CourseContext";
 import type { Status } from "@/lib/engine/types";
 import { STATUS } from "./status";
 
@@ -37,20 +38,37 @@ export type MapProps = {
 const R = 15;
 const key = (e: Edge) => `${e[0]}-${e[1]}`;
 
-function edgePath(from: SkillId, to: SkillId) {
+function edgePath(layout: CourseInfo["layout"], from: SkillId, to: SkillId) {
   const a = layout[from];
   const b = layout[to];
   const y1 = a.y - R;
   const y2 = b.y + R + 2;
   const dy = (y1 - y2) / 2;
+  // An edge must never look like it passes through another skill: if any node
+  // sits near the straight line, bow the curve out to the side away from it.
+  let bow = 0;
+  for (const [id, p] of Object.entries(layout)) {
+    if (id === from || id === to || p.y >= a.y - 4 || p.y <= b.y + 4) continue;
+    const t = (a.y - p.y) / (a.y - b.y);
+    const lineX = a.x + (b.x - a.x) * t;
+    if (Math.abs(lineX - p.x) < R + 16) {
+      const side = lineX < p.x ? -1 : lineX > p.x ? 1 : a.x >= b.x ? 1 : -1;
+      bow = side * Math.max(Math.abs(bow), R + 34 - Math.abs(lineX - p.x));
+    }
+  }
+  if (bow) {
+    const k = bow * 1.6;
+    return `M${a.x} ${y1} C${a.x + k} ${y1 - dy} ${b.x + k} ${y2 + dy} ${b.x} ${y2}`;
+  }
   return `M${a.x} ${y1} C${a.x} ${y1 - dy} ${b.x} ${y2 + dy} ${b.x} ${y2}`;
 }
-
-const ALL_EDGES: Edge[] = skills.flatMap((s) => s.prereqs.map((p) => [p, s.id] as Edge));
 
 function KnowledgeMapImpl({
   status, scope, focus, traced = [], active, repair = [], pulse, heat, selected, onSelect, label, className, bare,
 }: MapProps) {
+  const course = useCourse();
+  const { skills, skillById, layout, width: MAP_W, height: MAP_H } = course;
+  const ALL_EDGES = useMemo(() => skills.flatMap((s) => s.prereqs.map((p) => [p, s.id] as Edge)), [skills]);
   const tracedSet = new Set(traced.map(key));
   const repairSet = new Map(repair.map((e) => [key(e), e]));
   const local = new Set<string>();
@@ -69,7 +87,7 @@ function KnowledgeMapImpl({
   };
 
   return (
-    <div className={clsx("relative", className)}>
+    <div className={clsx("relative", className)} style={{ ["--map-aspect" as string]: MAP_H / MAP_W }}>
       <svg
         viewBox={`0 0 ${MAP_W} ${MAP_H}`}
         className="block h-full w-full select-none"
@@ -91,7 +109,7 @@ function KnowledgeMapImpl({
             const rep = repairSet.get(k);
             const isLocal = local.has(k);
             const dim = !inScope(e[0]) || !inScope(e[1]);
-            const d = edgePath(e[0], e[1]);
+            const d = edgePath(layout, e[0], e[1]);
             const repColor = rep ? STATUS[status[e[1]]].color : undefined;
             return (
               <g key={k} style={{ opacity: dim ? 0.12 : 1, transition: "opacity var(--dur-slow) var(--ease-in-out)" }}>

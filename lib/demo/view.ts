@@ -1,13 +1,10 @@
-import { questionById } from "../content/questions";
-import { skillById, TARGET_SKILL } from "../content/skills";
 import type { SkillId } from "../content/types";
-import { derive, graph, isSolid, type Derived, type Learner, type Status } from "../engine";
-import { TARGET_SCOPE } from "../scope";
+import type { CourseInfo } from "../course";
+import { derive, isSolid } from "../engine/evidence";
+import type { Derived, Learner, Status } from "../engine/types";
 import type { DemoState } from "./flow";
 
 export { lc } from "../text";
-
-export { TARGET_SCOPE } from "../scope";
 
 /** Status shown on the map: the derived status, with the mission's root shown as Repairing. */
 export function displayStatus(state: DemoState, derived: Derived): Record<SkillId, Status> {
@@ -20,15 +17,15 @@ export function displayStatus(state: DemoState, derived: Derived): Record<SkillI
 }
 
 /** Rough count of probes still needed, for the "question 5 of about 12" counter. */
-export function estimateRemaining(derived: Derived): number {
+export function estimateRemaining(course: CourseInfo, derived: Derived): number {
   const { direct, status } = derived;
   let n = 0;
-  for (const id of TARGET_SCOPE) {
+  for (const id of course.scope) {
     const d = direct[id];
     if (d.status === "suspect") n += 1;
     const failed = d.status === "suspect" || d.status === "gap";
     if (failed) {
-      for (const p of graph.prereqs[id]) {
+      for (const p of course.graph.prereqs[id]) {
         if (!isSolid(status[p]) && direct[p].status === "unknown") n += Math.max(0, 2 - direct[p].passQs.length);
       }
     }
@@ -44,8 +41,8 @@ export type EvidenceRow = {
   kind: "failed" | "direct" | "inferred" | "mixed";
 };
 
-/** Describe each skill's evidence in plain words, from the actual attempts. */
-export function evidenceFor(learner: Learner, skill: SkillId, derived = derive(graph, learner)): EvidenceRow {
+/** Describe each skill's evidence in a few plain words, from the actual attempts. */
+export function evidenceFor(course: CourseInfo, learner: Learner, skill: SkillId, derived = derive(course.graph, learner)): EvidenceRow {
   const d = derived.direct[skill];
   const status = derived.status[skill];
   const attempts = learner.attempts.filter((a) => a.skillId === skill && !a.disputed);
@@ -55,31 +52,30 @@ export function evidenceFor(learner: Learner, skill: SkillId, derived = derive(g
   let kind: EvidenceRow["kind"];
   if (status === "inferred_known") {
     const from = derived.inferredFrom[skill] ?? [];
-    detail = `Inferred from ${from.map((f) => skillById[f].name).join(" and ")}, not directly tested`;
+    detail = `Inferred from ${from.map((f) => course.skillById[f].short).join(", ")}`;
     kind = "inferred";
   } else if (d.status === "gap" || status === "root_gap") {
-    detail = `${fails} different questions wrong`;
+    detail = `${fails} wrong`;
     kind = "failed";
   } else if (d.status === "known") {
-    detail = `${d.passQs.length} different questions right, sure, no hints`;
+    detail = `${d.passQs.length} right, sure`;
     kind = "direct";
   } else if (d.status === "suspect") {
-    detail = strong > 0 ? `Mixed: ${fails} wrong, ${strong} right` : `1 question wrong, not yet confirmed`;
+    detail = strong > 0 ? `${fails} wrong, ${strong} right` : "1 wrong";
     kind = fails > 0 && strong > 0 ? "mixed" : "failed";
   } else {
-    detail = attempts.length ? `${attempts.length} answer${attempts.length > 1 ? "s" : ""}, not enough to confirm` : "Not tested";
+    detail = attempts.length ? `${attempts.length} answered, not confirmed` : "Not tested";
     kind = "mixed";
   }
-  return { skill, name: skillById[skill].name, status, detail, kind };
+  return { skill, name: course.skillById[skill].name, status, detail, kind };
 }
 
 /** The failed chain from the target down to the root gap, following graph edges. */
-export function failedChain(derived: Derived, root: SkillId, target: SkillId = TARGET_SKILL): SkillId[] {
+export function failedChain(course: CourseInfo, derived: Derived, root: SkillId): SkillId[] {
   const weak = (id: SkillId) => ["suspect", "gap", "root_gap"].includes(derived.status[id]);
-  // DFS down prerequisites from the target, staying on failed skills, until the root.
   const dfs = (id: SkillId, path: SkillId[]): SkillId[] | null => {
     if (id === root) return [...path, id];
-    for (const p of graph.prereqs[id]) {
+    for (const p of course.graph.prereqs[id]) {
       if (weak(p) || p === root) {
         const r = dfs(p, [...path, id]);
         if (r) return r;
@@ -87,7 +83,5 @@ export function failedChain(derived: Derived, root: SkillId, target: SkillId = T
     }
     return null;
   };
-  return dfs(target, []) ?? [target, root];
+  return dfs(course.target, []) ?? [course.target, root];
 }
-
-export const questionText = (id: string) => questionById[id]?.text ?? id;

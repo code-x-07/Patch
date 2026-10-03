@@ -157,7 +157,7 @@ body {
   /* Centre the node, but never pan past the map's edges (map height = 155% of its width). */
   transform: translate(
       clamp(calc(100cqw - var(--z) * 100cqw), calc(50cqw - var(--z) * var(--cx) * 1cqw), 0px),
-      clamp(calc(100cqh - var(--z) * 155cqw), calc(50cqh - var(--z) * var(--cy) * 1cqw), 0px)
+      clamp(calc(100cqh - var(--z) * var(--map-ratio, 155) * 1cqw), calc(50cqh - var(--z) * var(--cy) * 1cqw), 0px)
     )
     scale(var(--z));
   transition: transform var(--dur-hop) var(--ease-in-out);
@@ -178,12 +178,12 @@ body {
 /* Fit the whole map in the viewport height on large screens. */
 @media (min-width: 1024px) {
   .map-fit-present {
-    max-width: calc((100dvh - 15rem) * 0.645);
+    max-width: calc((100dvh - 15rem) / var(--map-aspect, 1.55));
   }
 }
 @media (min-width: 1024px) {
   .map-fit {
-    max-width: calc((100dvh - 8rem) * 0.645);
+    max-width: calc((100dvh - 11rem) / var(--map-aspect, 1.55));
     margin-inline: auto;
   }
 }

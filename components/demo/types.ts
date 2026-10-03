@@ -15,20 +15,21 @@ export type StageProps = {
   act: (action: Action) => void;
   /** Demo only: the scripted student's choice for the current question. */
   scripted: ScriptedChoice | null;
-  mode: "demo" | "live";
+  mode: "demo" | "live" | "learn";
   /** A request is in flight (Live Mode). */
   busy?: boolean;
 };
 
 /** Adapt a public question to the QuestionCard's shape (answer flags only once answered). */
-export function cardQuestion(q: PublicQuestion): Question {
+export function cardQuestion(q: PublicQuestion, conceptual = false): Question {
   return {
     id: q.id,
     skillId: q.skillId,
     kind: "check",
     tier: 1,
     text: q.text,
-    verify: { type: "num", expr: "" },
+    // Conceptual courses (code, prose) are shown as written, without maths typography.
+    verify: conceptual ? { type: "conceptual", rationale: "" } : { type: "num", expr: "" },
     options: q.options.map((o) => ({ text: o.text, correct: !!o.correct })),
   };
 }

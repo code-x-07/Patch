@@ -2,13 +2,13 @@
 
 import { Timer } from "lucide-react";
 import { useEffect, useState } from "react";
-import { OBJECTIVE_NAME } from "@/lib/content/skills";
-import { TARGET_SCOPE } from "@/lib/scope";
+import { useCourse } from "../CourseContext";
 import { MapStage } from "../MapStage";
 import { QuestionCard } from "./QuestionCard";
 import { cardFeedback, cardQuestion, type StageProps } from "./types";
 
-export function Quiz({ view, act, scripted, busy }: StageProps) {
+export function Quiz({ view, act, scripted, busy, mode }: StageProps) {
+  const course = useCourse();
   const cur = view.current!;
   const n = view.quizIndex + 1;
   const total = view.quizTotal;
@@ -16,15 +16,14 @@ export function Quiz({ view, act, scripted, busy }: StageProps) {
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:py-10">
       <aside className="order-2 hidden lg:order-1 lg:block" aria-label="Your Knowledge Map so far">
         <div className="sticky top-24">
-          <p className="mb-2 text-sm font-semibold text-faint">Your map fills in as you answer</p>
-          <MapStage status={view.status} scope={TARGET_SCOPE} focus={cur.question.skillId} label="Knowledge Map, updating with your answers" className="map-fit" />
+                    <MapStage status={view.status} scope={course.scope} focus={cur.question.skillId} label="Knowledge Map, updating with your answers" className="map-fit" />
         </div>
       </aside>
 
       <section className="order-1 lg:order-2" aria-labelledby="quiz-title">
         <div className="flex items-center justify-between gap-4">
           <h1 id="quiz-title" className="font-display text-lg font-bold text-muted">
-            Class Fight: {OBJECTIVE_NAME}
+            {mode === "learn" ? "Fight" : "Class Fight"}: {course.title}
           </h1>
           <span className="flex items-center gap-3 text-sm font-semibold text-faint tabular-nums">
             <QuestionTimer key={cur.question.id} running={!view.feedback} />
@@ -41,7 +40,7 @@ export function Quiz({ view, act, scripted, busy }: StageProps) {
         <div className="mt-8">
           <QuestionCard
             key={cur.question.id}
-            question={cardQuestion(cur.question)}
+            question={cardQuestion(cur.question, course.conceptual)}
             feedback={cardFeedback(view.feedback)}
             scripted={scripted}
             busy={busy}
@@ -51,7 +50,6 @@ export function Quiz({ view, act, scripted, busy }: StageProps) {
             continueLabel={n === total ? "See my Fight Report" : "Next question"}
           />
         </div>
-        <p className="mt-6 text-sm text-faint">The timer is there to keep pace. Speed never earns points; understanding does.</p>
       </section>
     </div>
   );

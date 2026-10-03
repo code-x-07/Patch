@@ -13,12 +13,12 @@ test("the whole demo loop runs offline after it's ready, with no network request
   await stepUntil(page, atStage(page, "Your Fight Report"));
   await expect(page.getByRole("button", { name: "TRACE MY GAP" })).toBeVisible();
   await stepUntil(page, atStage(page, "Root gap confirmed"));
-  await expect(page.locator("main")).toContainText("multiplying and dividing integers (including negatives)");
+  await expect(page.locator("main")).toContainText("Multiplying and dividing integers (including negatives)");
 
   // The evidence panel distinguishes direct from inferred knowledge.
   await page.getByRole("button", { name: "Why Patch thinks this" }).click();
   await expect(page.locator("#why-panel")).toContainText("Inferred from");
-  await expect(page.locator("#why-panel")).toContainText("2 different questions right, sure, no hints");
+  await expect(page.locator("#why-panel")).toContainText("2 right, sure");
 
   await stepUntil(page, atStage(page, "BOSS FIGHT"));
   await stepUntil(page, atStage(page, "Open my Knowledge Map"));

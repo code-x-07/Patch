@@ -2,36 +2,41 @@
 
 import clsx from "clsx";
 import { Check, Swords } from "lucide-react";
-import { formatMath } from "@/lib/content/math";
-import { skillById } from "@/lib/content/skills";
 import type { Skill, SkillId } from "@/lib/content/types";
 import type { Status } from "@/lib/engine/types";
 import type { LiveView } from "@/lib/live/types";
-import { lc } from "@/lib/text";
+import { useCourse, useFmt } from "../CourseContext";
 import { STATUS } from "../status";
 import { Button } from "../ui";
 import { QuestionCard } from "./QuestionCard";
 import { cardFeedback, cardQuestion, type StageProps } from "./types";
 
-type StepKey = "recap" | "lesson" | "practice" | "bridge" | "boss";
+type StepKey = "lesson" | "practice" | "bridge" | "boss";
 
 export function Mission({ view, act, scripted, busy }: StageProps) {
-  const state = view;
-  const status = view.status;
+  const course = useCourse();
   const m = view.mission!;
-  const plan = { ...m, practice: { length: m.practiceCount }, bridges: { length: m.bridgeCount } };
-  const root = skillById[plan.root];
-  const target = skillById[plan.target];
-  const isBoss = state.stage === "boss";
+  const root = course.skillById[m.root];
+  const target = course.skillById[m.target];
+  const isBoss = view.stage === "boss";
+  const cur = view.current;
 
   const steps: { key: StepKey; label: string }[] = [
-    { key: "lesson", label: "Repair" },
-    { key: "practice", label: `Practise ×${plan.practice.length}` },
-    ...(plan.bridges.length ? [{ key: "bridge" as const, label: `Bridge ×${plan.bridges.length}` }] : []),
+    { key: "lesson", label: "Learn" },
+    { key: "practice", label: `Practise ×${m.practiceCount}` },
+    ...(m.bridgeCount ? [{ key: "bridge" as const, label: `Bridge ×${m.bridgeCount}` }] : []),
     { key: "boss", label: "Boss Fight" },
   ];
-  const curKey: StepKey = isBoss ? "boss" : m.step;
-  const curIdx = steps.findIndex((s) => s.key === curKey);
+  const curIdx = steps.findIndex((s) => s.key === (isBoss ? "boss" : m.step));
+
+  const card = cur && {
+    question: cardQuestion(cur.question, course.conceptual),
+    feedback: cardFeedback(view.feedback),
+    scripted,
+    busy,
+    onAnswer: (optionIndex: number, confidence: "sure" | "guess") => act({ type: "answer", optionIndex, confidence }),
+    onContinue: () => act({ type: "continue" }),
+  };
 
   return (
     <div
@@ -42,13 +47,9 @@ export function Mission({ view, act, scripted, busy }: StageProps) {
     >
       <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:py-10">
         <header>
-          <p className="text-sm font-semibold text-faint">
-            Root Gap Mission{view.fast ? " · Fast Mode" : ""}
-          </p>
-          <h1 className="mt-1 font-display text-2xl font-bold text-balance sm:text-3xl">
-            Repair {lc(root.name)}, then beat {lc(target.short)}.
-          </h1>
-          <QuestTrack path={plan.path} status={status} />
+          <p className="text-sm font-semibold text-faint">Root Gap Mission{view.fast ? " · Fast" : ""}</p>
+          <h1 className="mt-1 font-display text-2xl font-bold text-balance sm:text-3xl">Fix {root.short.toLowerCase()}</h1>
+          <QuestTrack path={m.path} status={view.status} />
           <ol className="mt-4 flex flex-wrap gap-2" aria-label="Mission steps">
             {steps.map((s, i) => (
               <li
@@ -72,45 +73,40 @@ export function Mission({ view, act, scripted, busy }: StageProps) {
         <div className="mt-8">
           {m.step === "lesson" && !isBoss ? (
             <Lesson skill={root} recap={view.fast ? [] : m.recap} busy={busy} onDone={() => act({ type: "lessonDone" })} />
-          ) : state.current ? (
+          ) : card ? (
             isBoss ? (
-              <BossFrame role={state.current.role} target={target}>
+              <section
+                aria-labelledby="boss-h"
+                className="relative rounded-panel border border-root/50 bg-ink-900/90 p-5 shadow-[0_0_0_1px_rgb(255_79_123/0.15),0_30px_80px_-30px_rgb(255_79_123/0.45)] sm:p-8"
+              >
+                <div className="mb-6 flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-full border border-root/60 bg-root/15">
+                    <Swords aria-hidden className="size-5 text-root" />
+                  </span>
+                  <div>
+                    <h2 id="boss-h" className="anim-stamp font-display text-2xl font-extrabold tracking-[0.08em] text-root">BOSS FIGHT</h2>
+                    <p className="text-sm text-muted">{target.name}</p>
+                  </div>
+                </div>
                 <QuestionCard
-                  key={state.current.question.id}
+                  key={cur!.question.id}
                   tone="boss"
-                  question={cardQuestion(state.current.question)}
-                  feedback={cardFeedback(state.feedback)}
-                  scripted={scripted}
-                  busy={busy}
-                  heading={state.current.role === "confirm" ? "One more, to lock it in" : "Never seen before"}
-                  onAnswer={(optionIndex, confidence) => act({ type: "answer", optionIndex, confidence })}
-                  onContinue={() => act({ type: "continue" })}
-                  continueLabel={state.current.role === "confirm" || !state.feedback?.correct ? "Continue" : "Lock it in"}
+                  {...card}
+                  heading={cur!.role === "confirm" ? "One more to confirm" : "New question"}
+                  continueLabel={cur!.role === "confirm" || !view.feedback?.correct ? "Continue" : "Lock it in"}
                 />
-              </BossFrame>
+              </section>
             ) : (
               <QuestionCard
-                key={state.current.question.id}
-                question={cardQuestion(state.current.question)}
-                feedback={cardFeedback(state.feedback)}
-                scripted={scripted}
-                busy={busy}
+                key={cur!.question.id}
+                {...card}
                 heading={
-                  state.current.role === "practice"
-                    ? `Practise: ${root.name} (${m.index + 1} of ${plan.practice.length})`
-                    : state.current.role === "extra"
-                      ? `One more bridge check: ${skillById[state.current.question.skillId].name}`
-                      : `Bridge: ${skillById[state.current.question.skillId].name} (${m.index + 1} of ${plan.bridges.length})`
+                  cur!.role === "practice"
+                    ? `Practise: ${root.short} (${m.index + 1} of ${m.practiceCount})`
+                    : cur!.role === "extra"
+                      ? `One more bridge check: ${course.skillById[cur!.question.skillId].short}`
+                      : `Bridge: ${course.skillById[cur!.question.skillId].short} (${m.index + 1} of ${m.bridgeCount})`
                 }
-                context={
-                  state.current.role === "bridge"
-                    ? `Same idea, one step closer to ${lc(target.short)}.`
-                    : state.current.role === "extra"
-                      ? "That Boss Fight answer slipped. One quick check, then a fresh retry."
-                      : undefined
-                }
-                onAnswer={(optionIndex, confidence) => act({ type: "answer", optionIndex, confidence })}
-                onContinue={() => act({ type: "continue" })}
               />
             )
           ) : null}
@@ -121,11 +117,11 @@ export function Mission({ view, act, scripted, busy }: StageProps) {
 }
 
 function QuestTrack({ path, status }: { path: SkillId[]; status: Record<SkillId, Status> }) {
+  const course = useCourse();
   return (
     <ol className="mt-5 flex items-stretch gap-0 overflow-hidden" aria-label="Repair path">
       {path.map((id, i) => {
-        const st = status[id];
-        const meta = STATUS[st];
+        const meta = STATUS[status[id]];
         const Icon = meta.icon;
         return (
           <li key={id} className="flex min-w-0 flex-1 items-center">
@@ -137,7 +133,7 @@ function QuestTrack({ path, status }: { path: SkillId[]; status: Record<SkillId,
                 <Icon aria-hidden className="size-4" style={{ color: meta.color }} strokeWidth={2.6} />
               </span>
               <span className="line-clamp-2 text-[0.72rem] leading-tight font-semibold text-muted sm:text-xs">
-                {skillById[id].short}
+                {course.skillById[id].short}
                 <span className="sr-only">: {meta.label}</span>
               </span>
             </div>
@@ -152,50 +148,44 @@ function QuestTrack({ path, status }: { path: SkillId[]; status: Record<SkillId,
 }
 
 function Lesson({ skill, recap, busy, onDone }: { skill: Skill; recap: NonNullable<LiveView["mission"]>["recap"]; busy?: boolean; onDone: () => void }) {
+  const fmt = useFmt();
   const { lesson } = skill;
   return (
     <article className="anim-rise" aria-labelledby="lesson-h">
       {recap.length > 0 && (
-        <section className="mb-8" aria-label="What Patch saw">
-          <p className="text-sm font-semibold text-faint">What Patch saw</p>
-          <ul className="mt-2 grid gap-2">
-            {recap.map((r) => (
-              <li key={r.text} className="flex flex-wrap items-baseline justify-between gap-2 rounded-card bg-ink-900/70 px-4 py-2.5">
-                <span className="math text-lg">{formatMath(r.text)}</span>
-                <span className="text-base text-gap">
-                  you chose <span className="math font-semibold">{formatMath(r.chosen)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <ul className="mb-8 grid gap-2" aria-label="Your answers that led here">
+          {recap.map((r) => (
+            <li key={r.text} className="flex flex-wrap items-baseline justify-between gap-2 rounded-card bg-ink-900/70 px-4 py-2.5">
+              <span className="math whitespace-pre-wrap">{fmt(r.text)}</span>
+              <span className="text-sm text-gap">
+                you chose <span className="math font-semibold">{fmt(r.chosen)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
 
       <h2 id="lesson-h" className="font-display text-3xl font-bold">The one idea</h2>
-      <p className="mt-3 text-xl leading-relaxed text-text">{lesson.idea}</p>
+      <p className="mt-3 text-xl leading-relaxed text-text">{fmt(lesson.idea)}</p>
 
       {lesson.signGrid && <SignGrid />}
 
       <div className="mt-6 rounded-panel border border-line bg-ink-900/70 p-5">
-        <p className="text-sm font-semibold text-faint">Worked example</p>
-        <p className="math mt-1 text-2xl font-bold">{formatMath(lesson.example.prompt)}</p>
+        <p className="text-sm font-semibold text-faint">Example</p>
+        <p className="math mt-1 text-xl font-bold whitespace-pre-wrap">{fmt(lesson.example.prompt)}</p>
         <ol className="mt-3 grid gap-1.5">
           {lesson.example.steps.map((s, i) => (
             <li key={i} className="math flex gap-3 text-lg">
               <span aria-hidden className="text-faint tabular-nums">{i + 1}</span>
-              {formatMath(s)}
+              <span className="whitespace-pre-wrap">{fmt(s)}</span>
             </li>
           ))}
         </ol>
       </div>
 
       <p className="mt-5 border-l-2 border-gap/70 pl-4 text-lg">
-        <span className="font-bold text-gap">Common mistake: </span>
-        {formatMath(lesson.mistake)}
-      </p>
-      <p className="mt-4 text-lg text-muted">
-        <span className="font-semibold text-text">Check yourself: </span>
-        {formatMath(lesson.selfCheck)}
+        <span className="font-bold text-gap">Watch out: </span>
+        {fmt(lesson.mistake)}
       </p>
 
       <Button size="lg" className="mt-8 w-full sm:w-auto sm:px-10" onClick={onDone} loading={busy}>
@@ -235,32 +225,5 @@ function SignGrid() {
         ))}
       </tbody>
     </table>
-  );
-}
-
-function BossFrame({ role, target, children }: { role: string; target: Skill; children: React.ReactNode }) {
-  return (
-    <section
-      aria-labelledby="boss-h"
-      className="relative rounded-panel border border-root/50 bg-ink-900/90 p-5 shadow-[0_0_0_1px_rgb(255_79_123/0.15),0_30px_80px_-30px_rgb(255_79_123/0.45)] sm:p-8"
-    >
-      <div className="flex items-center gap-3">
-        <span className="grid size-10 place-items-center rounded-full border border-root/60 bg-root/15">
-          <Swords aria-hidden className="size-5 text-root" />
-        </span>
-        <div>
-          <h2 id="boss-h" className="anim-stamp font-display text-2xl font-extrabold tracking-[0.08em] text-root">
-            BOSS FIGHT
-          </h2>
-          <p className="text-sm text-muted">Back to the original: {target.name}</p>
-        </div>
-      </div>
-      <p className="mt-4 text-base text-muted">
-        {role === "confirm"
-          ? "Transfer looks real. A second unseen question confirms you can do this on your own."
-          : "A question you've never seen. Solve it on your own and the repair has transferred."}
-      </p>
-      <div className="mt-6">{children}</div>
-    </section>
   );
 }

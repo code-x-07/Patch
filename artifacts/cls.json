@@ -11,8 +11,8 @@
   },
   "landing@laptop-1440": {
     "viewport": "1440x900",
-    "value": 0,
-    "shifts": 0
+    "value": 0.00018291792588305897,
+    "shifts": 1
   },
   "demo-flow@laptop-1440": {
     "viewport": "1440x900",

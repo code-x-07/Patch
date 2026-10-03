@@ -2,7 +2,8 @@ import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 import { classReport, type ClassReport, type Member } from "../demo/classroom";
-import { initialState, reducer, type Action, type DemoState } from "../demo/flow";
+import { DEMO_COURSE, initialState, reducer } from "../demo/course";
+import type { Action, DemoState } from "../demo/flow";
 import { QUIZ } from "../demo/script";
 import type { ClassInfo, LiveView } from "./types";
 import { toLiveView } from "./view";
@@ -168,7 +169,7 @@ export async function play(token: string): Promise<PlayResponse> {
   if (c.state !== "lobby" && state.stage === "intro") {
     state = await save(s, reducer(state, { type: "start" }));
   }
-  return { class: info(c), nickname: s.nickname, view: toLiveView(state) };
+  return { class: info(c), nickname: s.nickname, view: toLiveView(state, DEMO_COURSE) };
 }
 
 export async function act(token: string, action: Action): Promise<PlayResponse> {
@@ -181,7 +182,7 @@ export async function act(token: string, action: Action): Promise<PlayResponse> 
   if (c.state === "lobby") throw new LiveError("Your teacher hasn't started yet.", 409);
   const next = reducer(s.state, action);
   const state = next === s.state ? s.state : await save(s, next);
-  return { class: info(c), nickname: s.nickname, view: toLiveView(state) };
+  return { class: info(c), nickname: s.nickname, view: toLiveView(state, DEMO_COURSE) };
 }
 
 /** Optimistic write: the version must match, so double taps can't apply twice. */

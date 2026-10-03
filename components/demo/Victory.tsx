@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "../useReducedMotion";
-import { skillById } from "@/lib/content/skills";
 import type { SkillId } from "@/lib/content/types";
-import { TARGET_SCOPE } from "@/lib/scope";
-import { lc } from "@/lib/text";
+import { useCourse } from "../CourseContext";
 import type { Edge } from "../KnowledgeMap";
 import { MapStage } from "../MapStage";
 import { StatusChip } from "../status";
@@ -14,6 +12,8 @@ import type { StageProps } from "./types";
 
 /** ROOT GAP DEFEATED → path repairs → TRANSFER VERIFIED, each beat driven by real evidence. */
 export function Victory({ view, act, mode }: StageProps) {
+  const course = useCourse();
+  const skillById = course.skillById;
   const state = view;
   const status = view.status;
   const reduced = useReducedMotion();
@@ -38,17 +38,15 @@ export function Victory({ view, act, mode }: StageProps) {
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12 lg:py-12">
       <section className="order-2 lg:order-1" aria-label="Your repaired path on the Knowledge Map">
         <div className="mx-auto max-w-md lg:sticky lg:top-20 lg:max-w-none">
-          <MapStage status={shownStatus} scope={TARGET_SCOPE} repair={repairEdges} focus={plan?.target} label="Knowledge Map after the mission" className="map-fit" />
+          <MapStage status={shownStatus} scope={course.scope} repair={repairEdges} focus={plan?.target} label="Knowledge Map after the mission" className="map-fit" />
         </div>
       </section>
 
       <section className="order-1 lg:order-2" aria-live="polite">
         {result.needsTeacher ? (
           <>
-            <h1 className="font-display text-4xl font-bold">Not this time, and that&apos;s useful.</h1>
-            <p className="mt-4 text-lg text-muted">
-              The Boss Fight slipped twice. Your teacher has been flagged so they can help with {lc(skillById[plan!.target].name)} in person.
-            </p>
+            <h1 className="font-display text-4xl font-bold">Not this time</h1>
+            <p className="mt-3 text-lg text-muted">The Boss Fight slipped twice. Your teacher can help with {skillById[plan!.target].short.toLowerCase()}.</p>
             <p className="mt-5 rounded-card border border-suspect/40 bg-suspect/[0.07] px-4 py-3 text-lg font-semibold text-suspect">Ask your teacher</p>
           </>
         ) : (
@@ -82,9 +80,7 @@ export function Victory({ view, act, mode }: StageProps) {
             )}
             <Reveal on={beat >= 3}>
               <p className="mt-4 max-w-xl text-base text-muted">
-                You solved new {lc(skillById[plan!.target].short)} questions on your own, sure each time. That proves the fix carried
-                over today. The skills in between still need their own checks before they turn solid, and lasting memory needs a
-                check on a later day.
+                Proven on new questions today. Amber skills still need their own checks.
               </p>
             </Reveal>
           </>

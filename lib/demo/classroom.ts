@@ -58,7 +58,15 @@ export type ClassReport = {
   distribution: { skill: SkillId | null; count: number }[];
   misconceptions: { misconception: Misconception; students: number; share: number; classWide: boolean }[];
   repair: { started: number; defeated: number; transferred: number; needsTeacher: number };
-  recommendation: { root: SkillId; target: SkillId; affected: number; classSize: number } | null;
+  /**
+   * What to reteach. "root": the most common root gap, while most of those
+   * students are still stuck. "now": once most have repaired it, the skill the
+   * most students are weak at now (so the advice matches the heatmap).
+   */
+  recommendation:
+    | { kind: "root"; skill: SkillId; target: SkillId; affected: number; stillStuck: number; classSize: number }
+    | { kind: "now"; skill: SkillId; target: SkillId; weakNow: number; fixedRoot: SkillId; classSize: number }
+    | null;
   status: { strong: number; developing: number; needsSupport: number };
 };
 
@@ -69,10 +77,13 @@ export function classReport(members: Member[], target: SkillId = TARGET_SKILL): 
   const classSize = members.length;
   const diagnoses = members.map((m) => ({ m, d: derive(graph, m.diagnosed) }));
 
+  // The heatmap shows the class as it is NOW (after any repairs), so it agrees
+  // with the repair numbers shown beside it.
+  const now = members.map((m) => derive(graph, m.current));
   const heatmap = {} as Record<SkillId, HeatCell>;
   for (const id of graph.ids) {
     let tested = 0, weak = 0;
-    for (const { d } of diagnoses) {
+    for (const d of now) {
       const s = d.status[id];
       if (s !== "unknown") tested++;
       if (s === "gap" || s === "root_gap" || s === "suspect") weak++;
@@ -121,7 +132,17 @@ export function classReport(members: Member[], target: SkillId = TARGET_SKILL): 
   };
 
   const top = distribution.find((d) => d.skill !== null);
-  const recommendation = top && top.skill ? { root: top.skill, target, affected: top.count, classSize } : null;
+  let recommendation: ClassReport["recommendation"] = null;
+  if (top?.skill) {
+    const stillStuck = members.filter((m) => m.rootGaps[0] === top.skill && !m.rootDefeated).length;
+    const weakest = graph.ids
+      .filter((id) => id !== target && heatmap[id].weak > 0)
+      .sort((a, b) => heatmap[b].weak - heatmap[a].weak || graph.depth[a] - graph.depth[b])[0];
+    recommendation =
+      stillStuck * 2 >= top.count || !weakest
+        ? { kind: "root", skill: top.skill, target, affected: top.count, stillStuck, classSize }
+        : { kind: "now", skill: weakest, target, weakNow: heatmap[weakest].weak, fixedRoot: top.skill, classSize };
+  }
 
   // Status now: Strong (target solid now, or never struggled), Needs Support (flagged, uncertain,
   // or root gap not yet repaired), otherwise Developing.

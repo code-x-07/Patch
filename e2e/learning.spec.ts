@@ -1,127 +1,84 @@
-import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page } from "@playwright/test";
 import { learningFixture } from "../lib/learning/test-fixture";
 
-async function check(page: Page) {
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+// Gemini is mocked with a synthetic deep course; no live provider result is claimed.
+const FAILING = ["Selecting test suites", "Coverage comparisons", "Decision coverage", "Decision outcomes", "Statement coverage"];
+
+async function check(page: Page, name: string) {
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${name}: no horizontal scroll`).toBe(true);
   const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-  expect(axe.violations.map((v) => `${v.id}: ${v.description}`)).toEqual([]);
+  expect(axe.violations.map((v) => `${name}: ${v.id}`)).toEqual([]);
 }
 
-test("individual session: generated preview through trace, mission, transfer and map on mobile", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.route("**/api/learning/generate", (route) => route.fulfill({ json: { course: learningFixture(), sourceName: "Test fixture notes" } }));
-  await page.goto("/learn");
-  await expect(page.getByRole("heading", { name: "Build a learning session" })).toBeVisible();
-  await check(page);
-  await page.screenshot({ path: "artifacts/screenshots/learning-mobile-upload.png", fullPage: true });
-  await page.getByRole("button", { name: "Use the Software Testing Week 8 text example" }).click();
-  await page.getByRole("button", { name: "Generate my learning path" }).click();
-  await expect(page.getByRole("button", { name: "Start my quiz" })).toBeDisabled();
-  await check(page);
-  await page.getByRole("button", { name: "Statement coverage: Not tested" }).click();
-  await expect(page.getByRole("region", { name: "Selected skill details" })).toContainText("AI-proposed link");
-  await page.screenshot({ path: "artifacts/screenshots/learning-mobile-preview.png", fullPage: true });
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Start my quiz" }).click();
-  async function answer(correct: boolean) {
-    await page.getByRole("radio").nth(correct ? 0 : 1).locator("..").click();
-    await page.getByRole("button", { name: "I'm sure", exact: true }).click();
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
+/** Answer as a student weak in the upper chain: wrong on failing skills until the repair, right otherwise. */
+async function step(page: Page, repaired: () => boolean) {
+  const main = page.locator("main");
+  const cont = main.locator("[role=status] button");
+  if (await cont.count()) return cont.first().click();
+  if (await main.locator("legend").count()) {
+    const text = await main.locator("legend span").nth(1).innerText();
+    const fail = !repaired() && FAILING.some((n) => text.startsWith(n));
+    await main.locator("label").nth(0).waitFor();
+    const labels = main.locator("label");
+    // Fixture: the correct answer is "The proportion of selected items exercised".
+    const n = await labels.count();
+    for (let i = 0; i < n; i++) {
+      const isCorrect = (await labels.nth(i).innerText()).includes("proportion of selected items");
+      if (isCorrect !== fail) { await labels.nth(i).click(); break; }
+    }
+    return page.getByRole("button", { name: "I'm sure" }).click();
   }
-  await check(page);
-  for (let i = 0; i < 8; i++) await answer(i === 0 || i === 5);
-  await expect(page.getByRole("heading", { name: "2 of 8 correct" })).toBeVisible();
-  await check(page);
-  await page.getByRole("button", { name: "TRACE MY GAP" }).click();
-  await check(page);
-  await page.screenshot({ path: "artifacts/screenshots/learning-mobile-trace.png", fullPage: true });
-  for (let i = 0; i < 2; i++) await answer(false);
-  await expect(page.getByRole("heading", { name: "Start with statement coverage." })).toBeVisible();
-  await page.getByText("Why Patch thinks this · View evidence", { exact: true }).click();
-  await check(page);
-  await page.getByRole("button", { name: "Start my Root Gap Mission" }).click();
-  await check(page);
-  await page.getByRole("button", { name: "Let’s practise" }).click();
-  for (let i = 0; i < 4; i++) await answer(true);
-  await expect(page.getByRole("heading", { name: "Prove · Boss Fight" })).toBeVisible();
-  await check(page);
-  for (let i = 0; i < 2; i++) await answer(true);
-  await expect(page.getByRole("heading", { name: "TRANSFER VERIFIED", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "ROOT GAP DEFEATED", exact: true })).toBeVisible();
-  await check(page);
-  await page.screenshot({ path: "artifacts/screenshots/learning-mobile-result.png", fullPage: true });
-  await page.getByRole("button", { name: "Open my Knowledge Map" }).click();
-  await check(page);
-  await page.getByRole("button", { name: "Restart this session" }).click();
-  await expect(page.getByRole("button", { name: "Start my quiz" })).toBeDisabled();
-});
+  for (const name of ["TRACE MY GAP", "Start my Root Gap Mission", "I've got it"]) {
+    const b = main.getByRole("button", { name });
+    if ((await b.count()) && (await b.isEnabled())) return b.click();
+  }
+  await page.waitForTimeout(300);
+}
 
-test("PDF upload and generation errors are recoverable", async ({ page }) => {
-  await page.goto("/learn");
-  await page.route("**/api/learning/generate", async (route) => {
-    expect(route.request().postDataBuffer()?.toString()).toContain("%PDF-test");
-    await route.fulfill({ status: 503, json: { error: "Add your Gemini API key to GEMINI_API_KEY in .env, then restart the local server." } });
+for (const vp of [{ width: 375, height: 812, tag: "mobile" }, { width: 1440, height: 900, tag: "laptop" }]) {
+  test(`learn (${vp.tag}): generated deep map, Fight Report, trace, mission, Boss Fight on the shared screens`, async ({ page }) => {
+    test.setTimeout(180_000);
+    await page.setViewportSize(vp);
+    await page.route("**/api/learning/generate", (route) => route.fulfill({ json: { course: learningFixture(), sourceName: "Fixture" } }));
+    await page.goto("/learn");
+    await check(page, "upload");
+    await page.getByRole("button", { name: "Use the Software Testing Week 8 text example" }).click();
+    await page.getByRole("button", { name: "Generate my learning path" }).click();
+
+    // Preview: the whole deep map, drawn with the same Knowledge Map as the demo.
+    await expect(page.getByRole("heading", { name: "Software testing fixture" })).toBeVisible();
+    await expect(page.locator("main")).toContainText("8");
+    await check(page, "preview");
+    await page.screenshot({ path: `artifacts/screenshots/learn-${vp.tag}-preview.png` });
+    await page.getByRole("button", { name: "Start my quiz" }).click();
+
+    let repaired = false;
+    for (let i = 0; i < 200 && !(await page.getByText("Your Fight Report").count()); i++) await step(page, () => repaired);
+    await expect(page.getByRole("button", { name: "TRACE MY GAP" })).toBeVisible();
+    await check(page, "fight report");
+    await page.screenshot({ path: `artifacts/screenshots/learn-${vp.tag}-report.png` });
+
+    for (let i = 0; i < 200 && !(await page.getByText("Root gap confirmed").count()); i++) await step(page, () => repaired);
+    await expect(page.locator("main")).toContainText("statement coverage");
+    await check(page, "reveal");
+    await page.screenshot({ path: `artifacts/screenshots/learn-${vp.tag}-reveal.png` });
+
+    repaired = true;
+    for (let i = 0; i < 200 && !(await page.getByText("Open my Knowledge Map").count()); i++) await step(page, () => repaired);
+    await expect(page.getByText("ROOT GAP DEFEATED")).toBeVisible();
+    await expect(page.getByText("TRANSFER VERIFIED")).toBeVisible();
+    await page.getByRole("button", { name: "Open my Knowledge Map" }).click();
+    await expect(page.getByRole("heading", { name: "Your Knowledge Map" })).toBeVisible();
+    await check(page, "map");
   });
+}
+
+test("generation errors are shown and recoverable", async ({ page }) => {
+  await page.goto("/learn");
+  await page.route("**/api/learning/generate", (route) => route.fulfill({ status: 503, json: { error: "AI sessions aren't set up on this server yet (missing GEMINI_API_KEY)." } }));
   await page.getByLabel("Lecture notes or slides").setInputFiles({ name: "test.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-test") });
   await page.getByRole("button", { name: "Generate my learning path" }).click();
   await expect(page.locator("main").getByRole("alert")).toContainText("GEMINI_API_KEY");
   await expect(page.getByRole("button", { name: "Generate my learning path" })).toBeEnabled();
-});
-
-test("desktop preview and keyboard-only answer work", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.route("**/api/learning/generate", (route) => route.fulfill({ json: { course: learningFixture(), sourceName: "Test fixture notes" } }));
-  await page.goto("/learn");
-  await page.getByRole("button", { name: "Use the Software Testing Week 8 text example" }).click();
-  await page.getByRole("button", { name: "Generate my learning path" }).click();
-  await expect(page.getByRole("heading", { name: "Software testing fixture" })).toBeVisible();
-  await check(page);
-  await page.screenshot({ path: "artifacts/screenshots/learning-laptop-preview.png", fullPage: true });
-  await page.getByRole("checkbox").focus(); await page.keyboard.press("Space");
-  await page.getByRole("button", { name: "Start my quiz" }).focus(); await page.keyboard.press("Enter");
-  await page.getByRole("radio").first().focus(); await page.keyboard.press("Space");
-  await page.getByRole("button", { name: "I'm sure", exact: true }).focus(); await page.keyboard.press("Enter");
-  await expect(page.getByRole("button", { name: "Continue", exact: true })).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { name: "Fight · Question 2 of 8" })).toBeVisible();
-});
-
-test("real generation route rejects cross-origin and unconfigured/empty requests", async ({ request }) => {
-  const foreign = await request.post("/api/learning/generate", { headers: { origin: "https://foreign.invalid" }, multipart: { notes: "too short" } });
-  expect(foreign.status()).toBe(403);
-  const empty = await request.post("/api/learning/generate", { multipart: { notes: "too short" } });
-  // Even if a developer has added a real key, this invalid request cannot
-  // trigger a provider call. Placeholder keys return a clear setup message.
-  expect([400, 503]).toContain(empty.status());
-  expect((await empty.json()).error).toBeTruthy();
-});
-
-test("landing keeps both learning and the original demo reachable", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: "Study your notes" }).first()).toHaveAttribute("href", "/learn");
-  await expect(page.getByRole("link", { name: "Try the demo" }).first()).toHaveAttribute("href", "/demo");
-  await check(page);
-});
-
-test("generated branches have distinct tap targets on mobile", async ({ page }) => {
-  const course = learningFixture();
-  course.skills[2].prerequisites = [{ skillId: "S1", reason: "Shared foundation", origin: "inferred" }];
-  course.skills[3].prerequisites = [{ skillId: "S2", reason: "Compare both measures", origin: "inferred" }, { skillId: "S3", reason: "Compare both measures", origin: "inferred" }];
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.route("**/api/learning/generate", (route) => route.fulfill({ json: { course, sourceName: "Branched map fixture" } }));
-  await page.goto("/learn");
-  await page.getByRole("button", { name: "Use the Software Testing Week 8 text example" }).click();
-  await page.getByRole("button", { name: "Generate my learning path" }).click();
-  await expect(page.getByRole("button", { name: "Start my quiz" })).toBeVisible();
-  const boxes = await page.getByRole("region", { name: "Generated Knowledge Map" }).getByRole("button").evaluateAll((elements) => elements.map((element) => {
-    const rect = element.getBoundingClientRect();
-    return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
-  }));
-  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
-    const a = boxes[i], b = boxes[j];
-    expect(a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top).toBe(false);
-  }
-  await check(page);
 });

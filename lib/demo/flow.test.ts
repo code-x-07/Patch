@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { derive, graph } from "../engine";
-import { initialState, reducer, type DemoState } from "./flow";
+import { initialState, reducer } from "./course";
+import type { DemoState } from "./flow";
 import { DEMO_STUDENT, scriptedAnswer } from "./script";
 
 /** Drive the UI reducer exactly as a presenter following the script would. */
