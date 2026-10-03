@@ -3,8 +3,10 @@ import {
   BOSS_COUNT,
   chooseQuiz,
   generationSchema,
+  keepValidQuestions,
   mapSchema,
   MAX_SKILLS,
+  pruneMap,
   MIN_CHAIN,
   MIN_SKILLS,
   PER_SKILL,
@@ -36,7 +38,7 @@ const MIN_CALL_MS = 20_000;
  * allows only ~20 requests a day per model), so on a quota error the next one
  * is used. GEMINI_MODEL, when set, goes first.
  */
-const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-lite-latest"];
+const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
 const QUOTA_COOLDOWN_MS = 60 * 60 * 1000;
 const exhausted = new Map<string, number>();
 
@@ -83,8 +85,14 @@ async function generateWith(model: string, notes: Notes, instruction: string, sc
         ] }],
         generationConfig: {
           maxOutputTokens: 65536,
-          ...(model.startsWith("gemini-3") ? { thinkingConfig: { thinkingLevel: "LOW" } } : {}),
-          responseFormat: { text: { mimeType: "APPLICATION_JSON", schema: generationSchema(schema) } },
+          // Keep "thinking" short: these are long structured outputs and the whole
+          // session must fit the time budget.
+          ...(model.startsWith("gemini-3") ? { thinkingConfig: { thinkingLevel: "LOW" } } : { thinkingConfig: { thinkingBudget: 0 } }),
+          // Gemini 3 models take responseFormat; older models need the classic
+          // responseMimeType + responseJsonSchema (they ignore responseFormat).
+          ...(model.startsWith("gemini-3")
+            ? { responseFormat: { text: { mimeType: "APPLICATION_JSON", schema: generationSchema(schema) } } }
+            : { responseMimeType: "application/json", responseJsonSchema: generationSchema(schema) }),
         },
       });
     const send = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -125,7 +133,9 @@ async function generateWith(model: string, notes: Notes, instruction: string, sc
   const candidate = body.candidates?.[0];
   if (candidate?.finishReason !== "STOP") throw new GenerationError("Gemini could not finish the content safely within the response limit. Try a narrower objective.", 422);
   const text = candidate.content?.parts?.filter((p: { thought?: boolean; text?: string }) => !p.thought && p.text).map((p: { text: string }) => p.text).join("");
-  try { return JSON.parse(text); }
+  // Safety net: tolerate a markdown fence around the JSON.
+  const unfenced = typeof text === "string" ? text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "") : text;
+  try { return JSON.parse(unfenced); }
   catch { throw new GenerationError("Gemini returned incomplete content. Please regenerate with a narrower objective.", 422); }
 }
 
@@ -196,7 +206,7 @@ export async function generateCourse(notes: Notes, signal?: AbortSignal): Promis
   for (let attempt = 0; attempt < 2 && !map; attempt++) {
     const draft = await generate(notes, mapInstruction(notes) + correction, z.toJSONSchema(mapSchema), signal, deadline);
     try {
-      map = validateMap(draft);
+      map = validateMap(pruneMap(draft));
     } catch (error) {
       const reason = error instanceof z.ZodError ? error.issues.slice(0, 5).map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") : error instanceof Error ? error.message : "invalid map";
       if (attempt === 1) throw new GenerationError(`Patch couldn't build a deep enough skill map from these notes (${reason}). Try a more specific objective.`, 422);
@@ -210,7 +220,7 @@ export async function generateCourse(notes: Notes, signal?: AbortSignal): Promis
   const byGroup = await Promise.all(groups.map((g) => generateQuestions(notes, m, g, deadline, signal)));
 
   const assemble = (lists: GeneratedQuestion[][]): Course => {
-    const questions = renumber(lists.flat());
+    const questions = renumber(keepValidQuestions(lists.flat()));
     return validateCourse({ ...m, questions, quizIds: chooseQuiz(m, questions) });
   };
   const structural = (lists: GeneratedQuestion[][]) => {
@@ -223,8 +233,9 @@ export async function generateCourse(notes: Notes, signal?: AbortSignal): Promis
   let check = structural(lists);
   if (!check.course) {
     lists = await Promise.all(groups.map((g, i) => {
-      const counts = (kind: GeneratedQuestion["kind"]) => g.every((s) => lists[i].filter((q) => q.skillId === s.id && q.kind === kind).length >= (kind === "boss" ? 0 : PER_SKILL[kind as keyof typeof PER_SKILL]));
-      const ok = counts("diagnostic") && counts("check") && counts("bridge") && (!g.some((s) => s.id === m.targetSkillId) || lists[i].filter((q) => q.kind === "boss").length >= BOSS_COUNT);
+      const valid = keepValidQuestions(lists[i]);
+      const counts = (kind: GeneratedQuestion["kind"]) => g.every((s) => valid.filter((q) => q.skillId === s.id && q.kind === kind).length >= (kind === "boss" ? 0 : PER_SKILL[kind as keyof typeof PER_SKILL]));
+      const ok = counts("diagnostic") && counts("check") && counts("bridge") && (!g.some((s) => s.id === m.targetSkillId) || valid.filter((q) => q.kind === "boss").length >= BOSS_COUNT);
       return ok ? lists[i] : generateQuestions(notes, m, g, deadline, signal, `\nYour previous answer failed: ${check.error} Meet every count exactly.`);
     }));
     check = structural(lists);

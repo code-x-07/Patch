@@ -98,6 +98,28 @@ export function chainLength(m: CourseMap): number {
   return depth(m.targetSkillId as SkillId);
 }
 
+/**
+ * Tidy a drafted map before validation: drop links to skills that don't exist
+ * and skills that don't lead to the target. Nothing is invented; unsupported
+ * parts are simply left out. Depth and size are still validated afterwards.
+ */
+export function pruneMap(input: unknown): unknown {
+  const parsed = mapSchema.safeParse(input);
+  if (!parsed.success) return input;
+  const m = parsed.data;
+  const ids = new Set(m.skills.map((s) => s.id));
+  const skills = m.skills.map((s) => ({ ...s, prerequisites: s.prerequisites.filter((p) => ids.has(p.skillId) && p.skillId !== s.id) }));
+  const byId = new Map<string, (typeof skills)[number]>(skills.map((s) => [s.id, s]));
+  const keep = new Set<string>();
+  const visit = (id: string) => {
+    if (keep.has(id) || !byId.has(id)) return;
+    keep.add(id);
+    for (const p of byId.get(id)!.prerequisites) visit(p.skillId);
+  };
+  visit(m.targetSkillId);
+  return { ...m, skills: skills.filter((s) => keep.has(s.id)) };
+}
+
 /** Structural checks on the skill map: ids, a connected tree under the target, real depth. */
 export function validateMap(input: unknown): CourseMap {
   const m = mapSchema.parse(input);
@@ -141,6 +163,26 @@ export function chooseQuiz(m: CourseMap, questions: GeneratedQuestion[]): string
     }
   }
   return quiz;
+}
+
+/**
+ * Drop individual questions that break the rules (not exactly one correct
+ * answer, repeated choices, wrong choices without a misconception, repeated
+ * text). Counts are checked afterwards, so a skill left short gets regenerated.
+ */
+export function keepValidQuestions(questions: GeneratedQuestion[]): GeneratedQuestion[] {
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  const seen = new Set<string>();
+  return questions.filter((q) => {
+    const text = norm(q.text);
+    const ok =
+      q.options.filter((o) => o.correct).length === 1 &&
+      new Set(q.options.map((o) => norm(o.text))).size === 4 &&
+      !q.options.some((o) => !o.correct && o.misconception.toLowerCase() === "none") &&
+      !seen.has(text);
+    if (ok) seen.add(text);
+    return ok;
+  });
 }
 
 /** Structural checks on the whole course. Separate from the AI content review; neither is a teacher endorsement. */

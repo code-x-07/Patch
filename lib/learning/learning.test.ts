@@ -5,7 +5,7 @@ import { makeFlow, type DemoState } from "../demo/flow";
 import { derive } from "../engine/evidence";
 import { toCourseDef } from "./course";
 import { generateCourse } from "./gemini";
-import { chainLength, generationSchema, mapSchema, MIN_CHAIN, validateCourse, validateMap, type Course } from "./schema";
+import { chainLength, generationSchema, mapSchema, MIN_CHAIN, pruneMap, validateCourse, validateMap, type Course } from "./schema";
 import { learningFixture } from "./test-fixture";
 
 afterEach(() => {
@@ -25,6 +25,14 @@ describe("generated course structure", () => {
     // Make every skill a direct prerequisite of the target: depth 2.
     const shallow = { ...c, skills: c.skills.map((s) => ({ ...s, prerequisites: s.id === "S8" ? c.skills.filter((x) => x.id !== "S8").map((x) => ({ skillId: x.id, reason: "r", origin: "notes" as const })).slice(0, 3) : [] })) };
     expect(() => validateMap(shallow)).toThrow();
+  });
+
+  it("prunes skills that don't lead to the target, then validates what remains", () => {
+    const c = learningFixture();
+    const extra = { ...c.skills[0], id: "S9" as const, name: "Unrelated", short: "Unrelated", prerequisites: [{ skillId: "S12" as const, reason: "x", origin: "notes" as const }] };
+    const pruned = validateMap(pruneMap({ ...c, skills: [...c.skills, extra] }));
+    expect(pruned.skills.map((s) => s.id)).not.toContain("S9");
+    expect(pruned.skills).toHaveLength(8);
   });
 
   it("chooses an 8-question quiz nearest the target, one diagnostic per skill", () => {
