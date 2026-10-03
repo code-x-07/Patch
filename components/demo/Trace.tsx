@@ -22,6 +22,12 @@ export function Trace({ state, dispatch, derived, status, follow }: StageProps) 
   }, [openingBeat, reduced]);
   const opening = openingBeat && !reduced;
 
+  // Each new probe: bring the map back into view so the beam's arrival is seen.
+  const qid = state.current?.question.id;
+  useEffect(() => {
+    if (qid) window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+  }, [qid, reduced]);
+
   const cur = state.current;
   const skill = cur ? skillById[cur.question.skillId] : null;
   const from = cur && !opening ? state.pendingFrom : null;

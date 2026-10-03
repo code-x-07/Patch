@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, Repeat2, Sparkles, X } from "lucide-react";
+import { Check, Repeat2, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { formatMath } from "@/lib/content/math";
 import type { Question } from "@/lib/content/types";
@@ -118,15 +118,15 @@ export function QuestionCard({
             {(["sure", "guess"] as const).map((c) => (
               <Button
                 key={c}
-                variant={c === "sure" ? "primary" : "secondary"}
+                variant={c === "sure" && selected !== null ? "primary" : "secondary"}
                 size="lg"
                 disabled={selected === null}
                 onClick={() => selected !== null && onAnswer(selected, c)}
                 className="relative"
               >
-                {c === "sure" ? "I'm sure" : "I'm guessing"}
+                {c === "sure" ? "I'm sure" : "Guessing"}
                 {scripted?.confidence === c && (
-                  <span className={clsx("absolute top-1.5 right-2 size-1.5 rounded-full", c === "sure" ? "bg-ink-950" : "bg-beam")} aria-label="(scripted choice)" />
+                  <span className={clsx("absolute top-1.5 right-2 size-1.5 rounded-full", c === "sure" && selected !== null ? "bg-ink-950" : "bg-beam")} aria-label="(scripted choice)" />
                 )}
               </Button>
             ))}
@@ -162,7 +162,7 @@ function FeedbackPanel({ feedback, compact, children }: { feedback: Feedback; co
             ? "Right, but you guessed. That counts as shaky for now."
             : "Correct, and you were sure."
           : feedback.confidentlyWrong
-            ? "Not quite, and you were sure. That's useful to know."
+            ? "Not quite. You were sure, so this is likely a mix-up worth fixing."
             : "Not quite."}
       </p>
       {!feedback.correct && feedback.message && (
@@ -177,11 +177,6 @@ function FeedbackPanel({ feedback, compact, children }: { feedback: Feedback; co
       {feedback.recurring && (
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-chip border border-suspect/50 bg-suspect/10 px-2 py-1 text-sm font-semibold text-suspect">
           <Repeat2 aria-hidden className="size-4" /> This keeps coming up
-        </p>
-      )}
-      {feedback.correct && !guessed && !compact && (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-base text-muted">
-          <Sparkles aria-hidden className="size-4 text-solid" /> Confident right answers count as strong evidence.
         </p>
       )}
       {children}

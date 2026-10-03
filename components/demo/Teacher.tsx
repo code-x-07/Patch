@@ -130,7 +130,7 @@ export function Teacher({ state, dispatch }: StageProps) {
               );
             })}
           </ul>
-          <MapStage status={heatStatus} heat={heat} label="Class heatmap on the skill tree" className={clsx("mt-3", present ? "max-w-xl" : "max-w-lg")} />
+          <MapStage status={heatStatus} heat={heat} label="Class heatmap on the skill tree" className={clsx("mt-3", present ? "map-fit-present max-w-xl" : "max-w-lg")} />
           <details className="mt-2">
             <summary className="min-h-10 cursor-pointer text-sm font-semibold text-muted">Show as a table</summary>
             <table className="mt-2 w-full text-left text-sm">
@@ -248,7 +248,7 @@ function Distribution({ report, large }: { report: ClassReport; large: boolean }
 function RepairAndStatus({ report, large }: { report: ClassReport; large: boolean }) {
   const { repair, status, classSize } = report;
   const tiles = [
-    { label: "started a repair mission", value: repair.started, icon: Crosshair, cls: "text-root" },
+    { label: "started a Root Gap Mission", value: repair.started, icon: Crosshair, cls: "text-root" },
     { label: "defeated their root gap", value: repair.defeated, icon: Check, cls: "text-solid" },
     { label: "passed the original question", value: repair.transferred, icon: Check, cls: "text-beam" },
     { label: "need you in person", value: repair.needsTeacher, icon: X, cls: "text-suspect" },

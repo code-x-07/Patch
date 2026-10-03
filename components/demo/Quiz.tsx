@@ -1,5 +1,7 @@
 "use client";
 
+import { Timer } from "lucide-react";
+import { useEffect, useState } from "react";
 import { OBJECTIVE_NAME } from "@/lib/content/skills";
 import { DEMO_STUDENT, QUIZ, scriptedAnswer } from "@/lib/demo/script";
 import { TARGET_SCOPE } from "@/lib/demo/view";
@@ -25,8 +27,9 @@ export function Quiz({ state, dispatch, status, follow }: StageProps) {
           <h1 id="quiz-title" className="font-display text-lg font-bold text-muted">
             Class Fight: {OBJECTIVE_NAME}
           </h1>
-          <span className="text-sm font-semibold text-faint tabular-nums">
-            {n} / {QUIZ.length}
+          <span className="flex items-center gap-3 text-sm font-semibold text-faint tabular-nums">
+            <QuestionTimer key={cur.question.id} running={!state.feedback} />
+            <span>{n} / {QUIZ.length}</span>
           </span>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-800" role="progressbar" aria-valuemin={0} aria-valuemax={QUIZ.length} aria-valuenow={n - 1} aria-label="Quiz progress">
@@ -48,8 +51,25 @@ export function Quiz({ state, dispatch, status, follow }: StageProps) {
             continueLabel={n === QUIZ.length ? "See my Fight Report" : "Next question"}
           />
         </div>
-        <p className="mt-6 text-sm text-faint">There&apos;s a timer in class, but speed never earns points here. Understanding does.</p>
+        <p className="mt-6 text-sm text-faint">The timer is there to keep pace. Speed never earns points; understanding does.</p>
       </section>
     </div>
+  );
+}
+
+/** Visible per-question timer. Shown for pace only: it never affects scoring. */
+function QuestionTimer({ running }: { running: boolean }) {
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(() => setSecs((x) => x + 1), 1000);
+    return () => clearInterval(t);
+  }, [running]);
+  return (
+    <span className="inline-flex items-center gap-1" role="timer" aria-label={`Time on this question: ${secs} seconds, not scored`}>
+      <Timer aria-hidden className="size-4" />
+      {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}
+      <span className="sr-only">(not scored)</span>
+    </span>
   );
 }

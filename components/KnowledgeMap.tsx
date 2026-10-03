@@ -160,7 +160,7 @@ function KnowledgeMapImpl({
                 : { "aria-hidden": true })}
             >
               {h != null && h > 0 && (
-                <circle r={R + 6 + h * 22} fill="var(--color-gap)" opacity={0.1 + h * 0.35} />
+                <circle r={R + 4 + h * 13} fill="var(--color-gap)" opacity={0.08 + h * 0.22} />
               )}
               {pulse === s.id && (
                 <>

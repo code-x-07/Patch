@@ -26,7 +26,7 @@ export function Report({ state, dispatch }: StageProps) {
 
   const stats: { value: string; label: string }[] = [
     { value: `${score.correct}/${score.total}`, label: "answered correctly" },
-    { value: `${score.improvement >= 0 ? "+" : ""}${score.improvement}`, label: "improvement score" },
+    { value: `${score.improvement >= 0 ? "+" : ""}${score.improvement}`, label: "improvement vs. expected" },
     { value: String(mistakes.length), label: mistakes.length === 1 ? "mistake" : "mistakes" },
     { value: String(guessed), label: guessed === 1 ? "answer was a guess" : "answers were guesses" },
   ];
