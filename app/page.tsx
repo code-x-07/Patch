@@ -15,7 +15,7 @@ export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
-        <Wordmark>{APP_NAME}</Wordmark>
+        <Wordmark size="lg">{APP_NAME}</Wordmark>
         <nav aria-label="Main" className="flex flex-wrap items-center gap-1 sm:gap-2">
           <Link href="/learn" className="min-h-11 rounded-card px-3 py-2.5 text-base font-semibold text-beam hover:bg-ink-800">Study your notes</Link>
           <Link href="/join" className="min-h-11 rounded-card px-3 py-2.5 text-base font-semibold text-muted hover:bg-ink-800 hover:text-text">

@@ -58,10 +58,16 @@ export function Meta({ children, className }: { children: ReactNode; className?:
   return <p className={clsx("text-sm font-semibold text-faint", className)}>{children}</p>;
 }
 
-export function Wordmark({ className, children }: { className?: string; children: ReactNode }) {
+export function Wordmark({ className, children, size = "md" }: { className?: string; children: ReactNode; size?: "md" | "lg" }) {
   return (
-    <span className={clsx("inline-flex items-center gap-2.5 font-display text-2xl font-bold tracking-tight sm:text-[1.7rem]", className)}>
-      <svg aria-hidden viewBox="0 0 24 24" className="size-8 sm:size-9">
+    <span
+      className={clsx(
+        "inline-flex items-center font-display font-bold tracking-tight",
+        size === "lg" ? "gap-3 text-3xl sm:text-[2.6rem]" : "gap-2.5 text-2xl sm:text-[1.7rem]",
+        className,
+      )}
+    >
+      <svg aria-hidden viewBox="0 0 24 24" className={size === "lg" ? "size-10 sm:size-14" : "size-8 sm:size-9"}>
         <circle cx="12" cy="5" r="2.6" fill="none" stroke="var(--color-beam)" strokeWidth="1.8" />
         <circle cx="5.5" cy="18" r="2.6" fill="none" stroke="var(--color-solid)" strokeWidth="1.8" />
         <circle cx="18.5" cy="18" r="2.6" fill="var(--color-root)" />
