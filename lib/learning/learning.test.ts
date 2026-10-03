@@ -130,7 +130,7 @@ describe("Gemini pipeline (mocked)", () => {
     const course: Course = await generateCourse({ pdf: Buffer.from("%PDF-test"), objective: "Coverage", level: "College" });
     expect(course.skills).toHaveLength(8);
     expect(course.quizIds).toHaveLength(8);
-    expect(f).toHaveBeenCalledTimes(1 + 3 + 1); // map + ceil(8/3) question calls + review
+    expect(f).toHaveBeenCalledTimes(1 + 2 + 1); // map + 2 question calls + review
     const body = JSON.parse(f.mock.calls[0][1].body);
     expect(body.contents[0].parts[1].inlineData.mimeType).toBe("application/pdf");
     expect(f.mock.calls[0][1].headers["x-goog-api-key"]).toBe("test-key");
@@ -151,14 +151,25 @@ describe("Gemini pipeline (mocked)", () => {
     const f = gemini((n) => (n === 0 ? { approved: false, issues: [{ skillId: "S2", problem: "Ambiguous answer" }] } : { approved: true, issues: [] }));
     vi.stubGlobal("fetch", f);
     await expect(generateCourse(notes)).resolves.toHaveProperty("title");
-    // map + 3 chunks + review + 1 repaired chunk + review
-    expect(f).toHaveBeenCalledTimes(7);
+    // map + 2 chunks + review + 1 repaired chunk + review
+    expect(f).toHaveBeenCalledTimes(6);
   });
 
   it("refuses content the review keeps rejecting", async () => {
     vi.stubEnv("GEMINI_API_KEY", "test-key");
     vi.stubGlobal("fetch", gemini(() => ({ approved: false, issues: [{ skillId: "S2", problem: "Wrong answer key" }] })));
     await expect(generateCourse(notes)).rejects.toThrow("AI review");
+  });
+
+  it("falls back to the next model when one is out of quota", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    vi.stubEnv("GEMINI_MODEL", "model-a");
+    const base = gemini(() => ({ approved: true, issues: [] }));
+    const f = vi.fn(async (url: string, init: { body: string; headers: Record<string, string> }) =>
+      url.includes("model-a") ? new Response("quota", { status: 429 }) : base(url, init));
+    vi.stubGlobal("fetch", f);
+    await expect(generateCourse(notes)).resolves.toHaveProperty("title");
+    expect(f.mock.calls.some(([u]) => String(u).includes("gemini-3.5-flash"))).toBe(true);
   });
 
   it("reports quota errors without leaking provider detail", async () => {

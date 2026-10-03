@@ -31,14 +31,46 @@ const BUDGET_MS = Number(process.env.GENERATION_BUDGET_MS ?? 285_000);
 const PER_CALL_MS = 150_000;
 const MIN_CALL_MS = 20_000;
 
+/**
+ * Models to try, in order. Each Gemini model has its own quota (the free tier
+ * allows only ~20 requests a day per model), so on a quota error the next one
+ * is used. GEMINI_MODEL, when set, goes first.
+ */
+const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-lite-latest"];
+const QUOTA_COOLDOWN_MS = 60 * 60 * 1000;
+const exhausted = new Map<string, number>();
+
+function models(): string[] {
+  const list = [...new Set([process.env.GEMINI_MODEL, ...FALLBACK_MODELS].filter(Boolean) as string[])];
+  const available = list.filter((m) => (exhausted.get(m) ?? 0) < Date.now());
+  return available.length ? available : list;
+}
+
 async function generate(notes: Notes, instruction: string, schema: object, signal?: AbortSignal, deadline = Date.now() + PER_CALL_MS) {
+  let last: unknown;
+  for (const model of models()) {
+    try {
+      return await generateWith(model, notes, instruction, schema, signal, deadline);
+    } catch (error) {
+      last = error;
+      // Quota/rate limit (429) or model unavailable (404): try the next model.
+      if (error instanceof GenerationError && (error.status === 429 || error.status === 404)) {
+        if (error.status === 429) exhausted.set(model, Date.now() + QUOTA_COOLDOWN_MS);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw last;
+}
+
+async function generateWith(model: string, notes: Notes, instruction: string, schema: object, signal?: AbortSignal, deadline = Date.now() + PER_CALL_MS) {
   const remaining = deadline - Date.now();
   if (remaining < MIN_CALL_MS) {
     throw new GenerationError("Generating this session is taking too long. Try a narrower objective or shorter notes.", 504);
   }
   const key = configuredKey();
   if (!key) throw new GenerationError("Add your Gemini API key to GEMINI_API_KEY in .env, then restart the local server.", 503);
-  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash";
   if (!/^[a-zA-Z0-9._-]+$/.test(model)) throw new GenerationError("GEMINI_MODEL is invalid.", 503);
   let response: Response;
   try {
@@ -83,8 +115,8 @@ async function generate(notes: Notes, instruction: string, schema: object, signa
       400: "Gemini rejected the document or generation settings. Try another PDF or pasted text. A smaller file alone may not resolve this.",
       401: "Gemini rejected the API key. Check GEMINI_API_KEY in .env.",
       403: "The Gemini key lacks access. Check the key and project permissions.",
-      404: "The configured Gemini model is unavailable. Update GEMINI_MODEL in .env.",
-      429: "Gemini's quota or rate limit was reached. Wait and retry, or check your project quota.",
+      404: "The configured Gemini model is unavailable. Update GEMINI_MODEL.",
+      429: "Gemini's quota or rate limit was reached on every available model. Try again later, or enable billing on the Gemini API key for higher limits.",
       503: "Gemini is experiencing high demand after multiple retries. Your file was accepted; please try again shortly.",
     };
     throw new GenerationError(messages[response.status] ?? "Gemini is temporarily unavailable. Please try again.", response.status === 429 ? 429 : 502);
@@ -97,7 +129,8 @@ async function generate(notes: Notes, instruction: string, schema: object, signa
   catch { throw new GenerationError("Gemini returned incomplete content. Please regenerate with a narrower objective.", 422); }
 }
 
-const SKILLS_PER_CALL = 3;
+/** Questions are generated in two parallel calls, keeping requests per session low (free-tier quotas are per request). */
+const QUESTION_CALLS = 2;
 
 const mapInstruction = (notes: Notes) => `Build the skill map for a Patch learning session from these lecture notes, for ${JSON.stringify(notes.level)}.
 Requested objective: ${JSON.stringify(notes.objective || "Choose one central, applied learning objective from the notes.")}
@@ -173,7 +206,7 @@ export async function generateCourse(notes: Notes, signal?: AbortSignal): Promis
   const m = map!;
 
   // 2. Questions, a few skills per call, in parallel.
-  const groups = chunks(m.skills, SKILLS_PER_CALL);
+  const groups = chunks(m.skills, Math.ceil(m.skills.length / QUESTION_CALLS));
   const byGroup = await Promise.all(groups.map((g) => generateQuestions(notes, m, g, deadline, signal)));
 
   const assemble = (lists: GeneratedQuestion[][]): Course => {
