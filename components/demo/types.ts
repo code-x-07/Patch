@@ -46,8 +46,10 @@ export function cardFeedback(f: LiveFeedback | null): Feedback | null {
 }
 
 /** Demo-only screens (intro, simulated teacher view) work on the local demo state directly. */
+export type DemoRuntime = typeof import("@/lib/demo/runtime");
+
 export type DemoOnlyProps = {
   state: import("@/lib/demo/flow").DemoState;
   dispatch: (action: Action) => void;
-  status: LiveView["status"];
+  runtime: DemoRuntime;
 };

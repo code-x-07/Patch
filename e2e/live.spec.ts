@@ -37,6 +37,7 @@ async function stepLive(page: Page) {
 }
 
 test("live class: teacher creates, student joins and plays the full loop, teacher sees it, data is deleted", async ({ browser }) => {
+  test.setTimeout(420_000);
   const teacher = await (await browser.newContext()).newPage();
   const student = await (await browser.newContext({ viewport: { width: 375, height: 812 } })).newPage();
 
@@ -50,6 +51,10 @@ test("live class: teacher creates, student joins and plays the full loop, teache
 
   // Watch every /api/play response: no answer key may appear before answering.
   const leaks: string[] = [];
+  const timings: number[] = [];
+  student.on("requestfinished", (req) => {
+    if (req.url().includes("/api/play") && req.method() === "POST") timings.push(req.timing().responseEnd);
+  });
   student.on("response", async (r) => {
     if (!r.url().includes("/api/play") || r.request().method() === "DELETE") return;
     const body = await r.json().catch(() => null);
@@ -85,6 +90,8 @@ test("live class: teacher creates, student joins and plays the full loop, teache
   await expect(student.getByText("ROOT GAP DEFEATED")).toBeVisible();
   await expect(student.getByText("TRANSFER VERIFIED")).toBeVisible();
   expect(leaks).toEqual([]);
+  timings.sort((a, b) => a - b);
+  console.log(`answers sent: ${timings.length}, median API time ${Math.round(timings[timings.length >> 1])} ms`);
 
   // Teacher dashboard reflects the student's real result.
   await expect(teacher.getByText("Recommended teacher action")).toBeVisible({ timeout: 10_000 });

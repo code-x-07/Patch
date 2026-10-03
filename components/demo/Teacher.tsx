@@ -1,15 +1,16 @@
 "use client";
 
 import { useMemo } from "react";
-import { classReport, CLASSMATES, simulatedClassmates, type Member } from "@/lib/demo/classroom";
+import type { Member } from "@/lib/demo/classroom";
 import { ClassInsight } from "../teacher/ClassInsight";
 import { Button } from "../ui";
 import type { DemoOnlyProps } from "./types";
 
 let cachedMates: Member[] | null = null;
-const mates = () => (cachedMates ??= simulatedClassmates());
 
-export function Teacher({ state, dispatch }: DemoOnlyProps) {
+export function Teacher({ state, dispatch, runtime }: DemoOnlyProps) {
+  const { classReport, CLASSMATES, simulatedClassmates } = runtime;
+  const mates = () => (cachedMates ??= simulatedClassmates());
   const report = useMemo(() => {
     const you: Member | null = state.diagnosed
       ? {
@@ -22,6 +23,7 @@ export function Teacher({ state, dispatch }: DemoOnlyProps) {
         }
       : null;
     return classReport(you ? [...mates(), you] : mates());
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runtime functions are stable module exports
   }, [state.diagnosed, state.learner, state.diagnosis, state.result]);
 
   return (

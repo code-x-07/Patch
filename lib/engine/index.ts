@@ -1,6 +1,8 @@
+import "./demoBank";
 import { skillGraph } from "./skillGraph";
 
 export * from "./types";
+export * from "./bank";
 export * from "./graph";
 export * from "./evidence";
 export * from "./mastery";
