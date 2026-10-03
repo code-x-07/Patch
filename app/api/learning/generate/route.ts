@@ -2,7 +2,8 @@ import { configuredKey, generateCourse, GenerationError } from "@/lib/learning/g
 import { enforceGenerationLimit } from "@/lib/learning/ratelimit";
 
 export const runtime = "nodejs";
-export const maxDuration = 600;
+// Vercel Hobby allows at most 300s; generation keeps its own 285s budget inside this.
+export const maxDuration = 300;
 const MAX_BYTES = 12 * 1024 * 1024;
 let active = false;
 
