@@ -30,7 +30,7 @@ export function TeacherHome() {
     e.preventDefault();
     setError(null);
     if (!name.trim()) return setError("Give the class a name.");
-    if (topic === "pdf" && (!file || !file.name.toLowerCase().endsWith(".pdf") || file.size > 8 * 1024 * 1024)) return setError("Choose a PDF under 8 MB.");
+    if (topic === "pdf" && (!file || !file.name.toLowerCase().endsWith(".pdf") || file.size > 4 * 1024 * 1024)) return setError("Choose a PDF under 4 MB, or paste the text instead.");
     if (topic === "text" && notes.trim().length < 100) return setError("Paste at least 100 characters of notes.");
 
     let course: unknown;

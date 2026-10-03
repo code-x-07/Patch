@@ -13,7 +13,7 @@ The API key exists only on the server. `.env` is ignored by Git. The default mod
 
 ## What is implemented
 
-- One PDF up to 12 MB, or 100–60,000 characters of pasted text. PDF bytes go directly to Gemini so figures and scanned slides can be interpreted.
+- One PDF up to 4 MB (Vercel request-body limit), or 100–60,000 characters of pasted text. PDF bytes go directly to Gemini so figures and scanned slides can be interpreted.
 - College/undergraduate default, editable level, optional objective chosen automatically when blank.
 - One focused objective, a dynamic map of 4–7 skills, lesson per skill, source references and supporting excerpts. Added foundations and proposed prerequisite links are labelled.
 - A structured course bank: four diagnostic, three repair-check and one bridge question per skill, plus four target Boss Fight variants. Eight quiz questions sample every skill. Validators require fresh diagnostic coverage after the quiz.

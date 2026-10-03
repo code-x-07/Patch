@@ -68,7 +68,7 @@ function UploadNotes({ onGenerated }: { onGenerated: (course: Course) => void })
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    if (mode === "pdf" && (!file || file.size > 8 * 1024 * 1024 || !file.name.toLowerCase().endsWith(".pdf"))) return setError("Choose a PDF under 8 MB.");
+    if (mode === "pdf" && (!file || file.size > 4 * 1024 * 1024 || !file.name.toLowerCase().endsWith(".pdf"))) return setError("Choose a PDF under 4 MB, or paste the text instead.");
     if (mode === "text" && notes.trim().length < 100) return setError("Paste at least 100 characters of notes.");
     setBusy(true);
     const controller = new AbortController();
