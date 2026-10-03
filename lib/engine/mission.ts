@@ -1,7 +1,7 @@
 import type { Question, SkillId } from "../content/types";
 import { derive } from "./evidence";
 import { shortestPath, type Graph } from "./graph";
-import { pickUnseen } from "./learner";
+import { pickUnseen, type ContentBank } from "./learner";
 import type { Learner } from "./types";
 
 /** Repair path from the root gap up to the target (section 4.5). */
@@ -22,12 +22,12 @@ export type MissionPlan = {
   fast: boolean;
 };
 
-export function planMission(g: Graph, learner: Learner, root: SkillId, target: SkillId, fast = false): MissionPlan {
+export function planMission(g: Graph, learner: Learner, root: SkillId, target: SkillId, fast = false, bank?: ContentBank): MissionPlan {
   const path = repairPath(g, learner, root, target);
   const reserved = new Set<string>();
   const practice: Question[] = [];
   for (let i = 0; i < 2; i++) {
-    const q = pickUnseen(learner, root, ["check", "bridge", "diagnostic"], reserved);
+    const q = pickUnseen(learner, root, bank ? ["check"] : ["check", "bridge", "diagnostic"], reserved, bank);
     if (!q) break;
     practice.push(q);
     reserved.add(q.id);
@@ -35,7 +35,7 @@ export function planMission(g: Graph, learner: Learner, root: SkillId, target: S
   const bridges: Question[] = [];
   if (!fast) {
     for (const id of path.slice(1, -1)) {
-      const q = pickUnseen(learner, id, ["bridge", "check", "diagnostic"], reserved);
+      const q = pickUnseen(learner, id, ["bridge", "check", "diagnostic"], reserved, bank);
       if (q) { bridges.push(q); reserved.add(q.id); }
     }
   }
@@ -43,6 +43,6 @@ export function planMission(g: Graph, learner: Learner, root: SkillId, target: S
 }
 
 /** Next unseen Boss Fight variant for the target. */
-export function nextBoss(learner: Learner, target: SkillId): Question | undefined {
-  return pickUnseen(learner, target, ["boss"]);
+export function nextBoss(learner: Learner, target: SkillId, bank?: ContentBank): Question | undefined {
+  return pickUnseen(learner, target, ["boss"], undefined, bank);
 }

@@ -32,6 +32,8 @@ export function QuestionCard({
   const answered = !!feedback;
   const chosen = feedback?.attempt.optionIndex ?? selected;
   const twoCol = question.options.every((o) => o.text.length <= 9);
+  // Keep code snippets and conceptual wording intact in generated subjects.
+  const display = question.verify.type === "conceptual" ? (text: string) => text : formatMath;
 
   useEffect(() => {
     if (answered) continueRef.current?.focus();
@@ -44,11 +46,11 @@ export function QuestionCard({
           <span className="block text-sm font-semibold text-faint">{heading}</span>
           <span
             className={clsx(
-              "math mt-2 block font-bold text-balance text-text",
+              "math mt-2 block whitespace-pre-wrap font-bold break-words text-balance text-text",
               tone === "boss" ? "font-display text-3xl sm:text-4xl" : "text-2xl sm:text-[1.75rem] leading-snug",
             )}
           >
-            {formatMath(question.text)}
+            {display(question.text)}
           </span>
         </legend>
         {context && (
@@ -95,7 +97,7 @@ export function QuestionCard({
                 >
                   {showCorrect ? <Check className="size-4" strokeWidth={3} /> : showWrong ? <X className="size-4" strokeWidth={3} /> : String.fromCharCode(65 + i)}
                 </span>
-                <span className="math text-xl font-semibold text-text">{formatMath(o.text)}</span>
+                <span className="math min-w-0 whitespace-pre-wrap text-xl font-semibold break-words text-text">{display(o.text)}</span>
                 {showCorrect && <span className="sr-only">(correct answer)</span>}
                 {showWrong && <span className="sr-only">(your answer, incorrect)</span>}
                 {isScript && (
@@ -135,7 +137,7 @@ export function QuestionCard({
       )}
 
       {feedback && (
-        <FeedbackPanel feedback={feedback} compact={compactFeedback}>
+        <FeedbackPanel feedback={feedback} compact={compactFeedback} display={display}>
           <Button ref={continueRef} onClick={onContinue} size="lg" className="mt-5 w-full sm:w-auto">
             {continueLabel}
           </Button>
@@ -145,7 +147,7 @@ export function QuestionCard({
   );
 }
 
-function FeedbackPanel({ feedback, compact, children }: { feedback: Feedback; compact?: boolean; children: React.ReactNode }) {
+function FeedbackPanel({ feedback, compact, children, display }: { feedback: Feedback; compact?: boolean; children: React.ReactNode; display: (text: string) => string }) {
   const guessed = feedback.attempt.confidence === "guess";
   return (
     <div
@@ -166,12 +168,12 @@ function FeedbackPanel({ feedback, compact, children }: { feedback: Feedback; co
             : "Not quite."}
       </p>
       {!feedback.correct && feedback.message && (
-        <p className="mt-2 text-lg text-text">{formatMath(feedback.message)}</p>
+        <p className="mt-2 text-lg text-text">{display(feedback.message)}</p>
       )}
       {!feedback.correct && feedback.confidentlyWrong && feedback.misconception && !compact && (
         <p className="mt-3 border-l-2 border-suspect/70 pl-3 text-base text-muted">
           <span className="font-semibold text-suspect">Likely misconception: {feedback.misconception.label}. </span>
-          {formatMath(feedback.misconception.explain)}
+          {display(feedback.misconception.explain)}
         </p>
       )}
       {feedback.recurring && (

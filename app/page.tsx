@@ -14,9 +14,10 @@ const LOOP = [
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6">
+      <header className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
         <Wordmark>{APP_NAME}</Wordmark>
-        <nav aria-label="Main" className="flex items-center gap-1 sm:gap-2">
+        <nav aria-label="Main" className="flex flex-wrap items-center gap-1 sm:gap-2">
+          <Link href="/learn" className="min-h-11 rounded-card px-3 py-2.5 text-base font-semibold text-beam hover:bg-ink-800">Study your notes</Link>
           <Link href="/join" className="min-h-11 rounded-card px-3 py-2.5 text-base font-semibold text-muted hover:bg-ink-800 hover:text-text">
             Join a class
           </Link>
@@ -38,14 +39,12 @@ export default function Home() {
               topic.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link href="/demo" className={buttonClass({ size: "lg" })}>
+              <Link href="/learn" className={buttonClass({ size: "lg" })}>Study your notes</Link>
+              <Link href="/demo" className={buttonClass({ variant: "secondary", size: "lg" })}>
                 Try the demo
               </Link>
-              <Link href="/join" className={buttonClass({ variant: "secondary", size: "lg" })}>
-                Join a class
-              </Link>
             </div>
-            <p className="mt-5 text-base text-faint">Three minutes, runs in your browser, no sign-up.</p>
+            <p className="mt-5 text-base text-faint">No sign-up. Try the three-minute demo or bring your own lecture notes.</p>
           </div>
 
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">

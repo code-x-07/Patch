@@ -20,6 +20,12 @@ npm run test:e2e       # Playwright e2e against a local production build (uses i
 PLAYWRIGHT_BASE_URL=https://<live-url> npm run test:e2e   # same suite against the live site
 ```
 
+## AI notes MVP
+
+Open `/learn` to upload a PDF or paste lecture notes and create an individual learning session. Add your key to `GEMINI_API_KEY` in the ignored `.env` file, then restart the server. The default level is college/undergraduate. Gemini generates and reviews the map, question bank and lessons; Patch's deterministic evidence engine runs the learning session. The original `/demo` remains available.
+
+See [AI learning setup and implementation](docs/AI-LEARNING.md) for limits, privacy, architecture and verification. Live Gemini generation requires your real key; automated integration tests use mock responses. This version keeps sessions in memory and does not save progress.
+
 ## How it works
 
 | Module | What it does |

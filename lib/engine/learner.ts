@@ -5,6 +5,12 @@ import type { Graph } from "./graph";
 import { INITIAL_MASTERY, updateMastery } from "./mastery";
 import type { Attempt, Confidence, Learner, Phase } from "./types";
 
+/** Optional session content. Omitted for the original bundled demo. */
+export type ContentBank = {
+  questions: Question[];
+  misconceptions: Record<string, Misconception>;
+};
+
 export function createLearner(g: Graph, initial: Partial<Record<SkillId, number>> = {}): Learner {
   const mastery = {} as Record<SkillId, number>;
   for (const id of g.ids) mastery[id] = initial[id] ?? INITIAL_MASTERY;
@@ -30,6 +36,7 @@ export function answer(
   confidence: Confidence,
   phase: Phase,
   hintsUsed = 0,
+  bank?: ContentBank,
 ): { learner: Learner; feedback: Feedback } {
   const option = question.options[optionIndex];
   if (!option) throw new Error(`${question.id}: no option ${optionIndex}`);
@@ -52,7 +59,7 @@ export function answer(
     baseline: phaseStart[skill],
     ...(option.misconceptionId ? { misconceptionId: option.misconceptionId } : {}),
   };
-  const misconception = option.misconceptionId ? misconceptions[option.misconceptionId] : undefined;
+  const misconception = option.misconceptionId ? (bank?.misconceptions ?? misconceptions)[option.misconceptionId] : undefined;
   const recurring =
     !!misconception && learner.attempts.some((a) => a.misconceptionId === misconception.id);
   return {
@@ -84,9 +91,10 @@ export function pickUnseen(
   skill: SkillId,
   kinds: QuestionKind[] = ["diagnostic", "check", "bridge"],
   exclude: ReadonlySet<string> = new Set(),
+  bank?: ContentBank,
 ): Question | undefined {
   const seen = seenQuestionIds(learner);
-  return questionsForSkill(skill)
+  return (bank ? bank.questions.filter((q) => q.skillId === skill) : questionsForSkill(skill))
     .filter((q) => kinds.includes(q.kind) && !seen.has(q.id) && !exclude.has(q.id))
     .sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind))[0];
 }

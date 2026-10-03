@@ -39,6 +39,7 @@ export type Option = {
  * verification tests (never shipped as an answer key in Live Mode).
  */
 export type Verify =
+  | { type: "conceptual"; rationale: string }
   | { type: "num"; expr: string }
   | { type: "poly"; expr: string }
   | { type: "roots"; expr: string }
