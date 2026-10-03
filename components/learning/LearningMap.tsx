@@ -14,7 +14,7 @@ export function LearningMap({ course, status, focus }: { course: Course; status?
   const height = levels * 150 + 30;
   const positions = Object.fromEntries(course.skills.map((skill) => {
     const peers = course.skills.filter((s) => graph.depth[s.id] === graph.depth[skill.id]);
-    return [skill.id, { x: ((peers.findIndex((s) => s.id === skill.id) + 1) / (peers.length + 1)) * 600, y: (levels - 1 - graph.depth[skill.id]) * 150 + 70 }];
+    return [skill.id, { x: ((peers.findIndex((s) => s.id === skill.id) + 0.5) / peers.length) * 600, y: (levels - 1 - graph.depth[skill.id]) * 150 + 70 }];
   })) as Record<SkillId, { x: number; y: number }>;
   const selectedSkill = course.skills.find((s) => s.id === selected);
   return (

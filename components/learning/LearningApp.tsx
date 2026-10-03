@@ -46,7 +46,7 @@ function UploadNotes({ onGenerated }: { onGenerated: (course: Course, sourceName
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    if (mode === "pdf" && (!file || file.size > 8 * 1024 * 1024 || !file.name.toLowerCase().endsWith(".pdf"))) { setError("Choose a PDF smaller than 8 MB."); return; }
+    if (mode === "pdf" && (!file || file.size > 12 * 1024 * 1024 || !file.name.toLowerCase().endsWith(".pdf"))) { setError("Choose a PDF smaller than 12 MB."); return; }
     if (mode === "text" && notes.trim().length < 100) { setError("Paste at least 100 characters of lecture notes."); return; }
     setBusy(true);
     const controller = new AbortController();
@@ -88,7 +88,7 @@ function UploadNotes({ onGenerated }: { onGenerated: (course: Course, sourceName
           <Button variant={mode === "pdf" ? "primary" : "secondary"} aria-pressed={mode === "pdf"} onClick={() => setMode("pdf")}><Upload aria-hidden className="size-4" /> PDF</Button>
           <Button variant={mode === "text" ? "primary" : "secondary"} aria-pressed={mode === "text"} onClick={() => setMode("text")}><FileText aria-hidden className="size-4" /> Paste text</Button>
         </div>
-        {mode === "pdf" ? <div><label htmlFor="notes-file" className="font-semibold">Lecture notes or slides</label><input id="notes-file" type="file" accept="application/pdf,.pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className={`${inputClass} min-w-0 file:mr-3 file:rounded-card file:border-0 file:bg-ink-700 file:px-3 file:py-2 file:text-text`} /><p className="mt-2 text-sm text-faint">One PDF, up to 8 MB. For long decks, choose a focused objective.</p></div>
+        {mode === "pdf" ? <div><label htmlFor="notes-file" className="font-semibold">Lecture notes or slides</label><input id="notes-file" type="file" accept="application/pdf,.pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className={`${inputClass} min-w-0 file:mr-3 file:rounded-card file:border-0 file:bg-ink-700 file:px-3 file:py-2 file:text-text`} /><p className="mt-2 text-sm text-faint">One PDF, up to 12 MB. For long decks, choose a focused objective.</p></div>
           : <div><label htmlFor="notes-text" className="font-semibold">Your lecture notes</label><textarea id="notes-text" rows={8} maxLength={60_000} value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} placeholder="Paste a lecture, chapter or topic you want to understand…" /><p className="mt-1 text-sm text-faint">100–60,000 characters.</p></div>}
         <div><label htmlFor="learning-level" className="font-semibold">Student level</label><input id="learning-level" maxLength={100} value={level} onChange={(e) => setLevel(e.target.value)} className={inputClass} required /></div>
         <div><label htmlFor="learning-objective" className="font-semibold">What do you want to be able to do? <span className="font-normal text-faint">Optional</span></label><input id="learning-objective" maxLength={300} value={objective} onChange={(e) => setObjective(e.target.value)} className={inputClass} placeholder="e.g. Design tests and interpret their coverage" /><p className="mt-2 text-sm text-faint">Leave blank and Patch will choose a focused objective from your notes.</p></div>

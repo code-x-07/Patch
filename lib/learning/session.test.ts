@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { learningFixture } from "./test-fixture";
-import { validateCourse, toBank } from "./schema";
+import { validateCourse, toBank, generationSchema } from "./schema";
 import { sessionEngine, type LearningState } from "./session";
 import { derive } from "../engine/evidence";
 import { generateCourse, configuredKey } from "./gemini";
@@ -8,6 +8,12 @@ import { generateCourse, configuredKey } from "./gemini";
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 describe("generated content validation", () => {
+  it("sends a simple response shape to Gemini while retaining local bounds", () => {
+    const input = { $schema: "draft", type: "object", properties: { items: { type: "array", minItems: 4, maxItems: 7, items: { type: "string", minLength: 1, maxLength: 1800, pattern: "x", enum: ["x", "y"] } } }, required: ["items"] };
+    expect(generationSchema(input)).toEqual({ type: "object", properties: { items: { type: "array", items: { type: "string", enum: ["x", "y"] } } }, required: ["items"] });
+    const c = learningFixture(); c.skills[0].short = "x".repeat(46);
+    expect(() => validateCourse(c)).toThrow();
+  });
   it("accepts a complete graph and content bank", () => { expect(validateCourse(learningFixture()).skills).toHaveLength(5); });
   it.each([
     ["cycles", (c: ReturnType<typeof learningFixture>) => { c.skills[0].prerequisites = [{ skillId: "S5", origin: "inferred", reason: "Invalid cycle" }]; }],
@@ -126,17 +132,45 @@ describe("Gemini integration", () => {
     expect(result.title).toBe("Software testing fixture"); expect(fetcher).toHaveBeenCalledTimes(2);
     const request = JSON.parse(fetcher.mock.calls[0][1].body);
     expect(request.contents[0].parts[1].inlineData.mimeType).toBe("application/pdf");
-    expect(request.generationConfig.responseFormat.text.mimeType).toBe("application/json");
+    expect(request.generationConfig.responseFormat.text.mimeType).toBe("APPLICATION_JSON");
     expect(fetcher.mock.calls[0][1].headers["x-goog-api-key"]).toBe("test-key");
   });
   it("rejects content that the review fails", async () => {
     vi.stubEnv("GEMINI_API_KEY", "test-key");
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response(learningFixture())).mockResolvedValueOnce(response({ approved: false, issues: ["Wrong answer"] })));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response(learningFixture())).mockResolvedValueOnce(response({ approved: false, issues: ["Wrong answer"] })).mockResolvedValueOnce(response(learningFixture())).mockResolvedValueOnce(response({ approved: false, issues: ["Wrong answer"] })));
     await expect(generateCourse({ text: "notes", objective: "", level: "College" })).rejects.toThrow("AI review found");
+  });
+  it("revises a structurally invalid draft once, then reviews the correction", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    const invalid = learningFixture(); invalid.questions[0].options[1].correct = true;
+    const fetcher = vi.fn().mockResolvedValueOnce(response(invalid)).mockResolvedValueOnce(response(learningFixture())).mockResolvedValueOnce(response({ approved: true, issues: [] }));
+    vi.stubGlobal("fetch", fetcher);
+    await expect(generateCourse({ text: "notes", objective: "", level: "College" })).resolves.toHaveProperty("title");
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(JSON.parse(fetcher.mock.calls[1][1].body).contents[0].parts[0].text).toContain("exactly one correct answer");
+  });
+  it("revises a rejected content review once and requires approval again", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    const fetcher = vi.fn().mockResolvedValueOnce(response(learningFixture())).mockResolvedValueOnce(response({ approved: false, issues: ["Ambiguous answer"] })).mockResolvedValueOnce(response(learningFixture())).mockResolvedValueOnce(response({ approved: true, issues: [] }));
+    vi.stubGlobal("fetch", fetcher);
+    await expect(generateCourse({ text: "notes", objective: "", level: "College" })).resolves.toHaveProperty("title");
+    expect(fetcher).toHaveBeenCalledTimes(4);
   });
   it("handles quota errors without leaking provider responses or credentials", async () => {
     vi.stubEnv("GEMINI_API_KEY", "test-key");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("sensitive provider detail", { status: 429 })));
     await expect(generateCourse({ text: "notes", objective: "", level: "College" })).rejects.toThrow("quota or rate limit");
+  });
+  it("recovers from a temporary provider overload without retrying quota errors", async () => {
+    vi.useFakeTimers();
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    const fetcher = vi.fn().mockResolvedValueOnce(new Response("overloaded", { status: 503 })).mockResolvedValueOnce(response(learningFixture())).mockResolvedValueOnce(response({ approved: true, issues: [] }));
+    vi.stubGlobal("fetch", fetcher);
+    try {
+      const pending = generateCourse({ text: "notes", objective: "", level: "College" });
+      await vi.runAllTimersAsync();
+      await expect(pending).resolves.toHaveProperty("title", "Software testing fixture");
+      expect(fetcher).toHaveBeenCalledTimes(3);
+    } finally { vi.useRealTimers(); }
   });
 });

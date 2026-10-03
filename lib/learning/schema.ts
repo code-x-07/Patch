@@ -40,6 +40,18 @@ export const courseSchema = z.object({
 
 export type Course = z.infer<typeof courseSchema>;
 
+/** Gemini's schema compiler can reject large bounded-string/array grammars.
+ * Keep the response shape in its schema; enforce bounds with Zod afterwards. */
+export function generationSchema(schema: object): object {
+  const localChecks = new Set(["$schema", "minLength", "maxLength", "pattern", "minItems", "maxItems", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"]);
+  function simplify(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(simplify);
+    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).filter(([key]) => !localChecks.has(key)).map(([key, child]) => [key, simplify(child)]));
+    return value;
+  }
+  return simplify(schema) as object;
+}
+
 /** Structural checks are separate from Gemini's content review. Neither is a teacher endorsement. */
 export function validateCourse(input: unknown): Course {
   const course = courseSchema.parse(input);
