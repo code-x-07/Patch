@@ -26,6 +26,22 @@ Open `/learn` to upload a PDF or paste lecture notes and create an individual le
 
 See [AI learning setup and implementation](docs/AI-LEARNING.md) for limits, privacy, architecture and verification. Live Gemini generation requires your real key; automated integration tests use mock responses. This version keeps sessions in memory and does not save progress.
 
+## Use of generative AI
+
+**Our own work**
+- **Idea and problem framing:** tracing a student's mistake back to the earlier skill that's really in the way (the Root Gap), and the FIGHT → FIND → FIX → PROVE → MASTER loop.
+- **Skill graph design:** the 19-skill algebra map, its prerequisite links, and how it was refined.
+- **Core logic:** the diagnosis rules in the engine. These are the two-question rule, Sure/Guess confidence, adaptive tracing, root-gap verification, mastery updates and improvement scoring.
+- **Presentation content:** the problem, the argument and the story in the pitch.
+
+**Where we used AI tools**
+- **UI/UX build:** AI coding assistants helped implement the interface, visual design, layout, accessibility fixes and design polish, under our direction and review.
+- **Presentation slides:** we wrote the content; the slides were laid out and designed with an AI presentation tool (Gamma).
+
+**AI inside the product**
+- **`/demo`:** runs with no AI at all. Diagnosis there is deterministic rules on the skill graph.
+- **`/learn`:** uses Google Gemini to draft a skill map, questions and lessons from the notes a student uploads, then checks that content in a second Gemini review pass. Once the session starts, Patch's own rule-based engine does the diagnosis, not the AI.
+
 ## How it works
 
 | Module | What it does |
