@@ -1,4 +1,5 @@
 import { configuredKey, generateCourse, GenerationError } from "@/lib/learning/gemini";
+import { enforceGenerationLimit } from "@/lib/learning/ratelimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -8,7 +9,7 @@ let active = false;
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "Use the upload form on this site." }, { status: 403 });
-  if (!configuredKey()) return Response.json({ error: "Add your Gemini API key to GEMINI_API_KEY in .env, then restart the local server." }, { status: 503 });
+  if (!configuredKey()) return Response.json({ error: "AI sessions aren't set up on this server yet (missing GEMINI_API_KEY)." }, { status: 503 });
   if (active) return Response.json({ error: "Another session is being generated. Wait for it to finish, then retry." }, { status: 429 });
   active = true;
   try {
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
     }
     if (pdf && text) throw new GenerationError("Choose a PDF or pasted text, rather than both.", 400);
     if (!pdf && text.length < 100) throw new GenerationError("Upload a PDF or paste at least 100 characters of lecture notes.", 400);
+    await enforceGenerationLimit(request);
     const course = await generateCourse({ pdf, text, objective, level: level || "College / undergraduate" }, request.signal);
     return Response.json({ course, sourceName: pdf && file instanceof File ? file.name : "Pasted lecture notes" }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

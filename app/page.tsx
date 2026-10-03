@@ -21,6 +21,9 @@ export default function Home() {
           <Link href="/join" className="min-h-11 rounded-card px-3 py-2.5 text-base font-semibold text-muted hover:bg-ink-800 hover:text-text">
             Join a class
           </Link>
+          <Link href="/teach" className="min-h-11 rounded-card px-3 py-2.5 text-base font-semibold text-muted hover:bg-ink-800 hover:text-text">
+            Teach a class
+          </Link>
           <Link href="/demo" className="min-h-11 rounded-card px-3 py-2.5 text-base font-semibold text-beam hover:bg-ink-800">
             Try the demo
           </Link>
