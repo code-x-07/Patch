@@ -159,6 +159,7 @@ function KnowledgeMapImpl({
                   }
                 : { "aria-hidden": true })}
             >
+              {interactive && <circle r={24} fill="transparent" />}
               {h != null && h > 0 && (
                 <circle r={R + 4 + h * 13} fill="var(--color-gap)" opacity={0.08 + h * 0.22} />
               )}

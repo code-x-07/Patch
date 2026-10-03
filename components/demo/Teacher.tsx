@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { Check, Crosshair, Maximize2, Minimize2, TriangleAlert, Users, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatMath } from "@/lib/content/math";
 import { OBJECTIVE_NAME, skillById, TARGET_SKILL } from "@/lib/content/skills";
 import type { SkillId } from "@/lib/content/types";
@@ -42,13 +42,6 @@ export function Teacher({ state, dispatch }: StageProps) {
       : null;
     return classReport(you ? [...mates(), you] : mates());
   }, [state.diagnosed, state.learner, state.diagnosis, state.result]);
-
-  useEffect(() => {
-    if (!present) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPresent(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [present]);
 
   const rec = report.recommendation;
   const heatStatus = Object.fromEntries(graph.ids.map((id) => [id, LEVEL_STATUS[report.heatmap[id].level]])) as Record<SkillId, Status>;
@@ -157,16 +150,7 @@ export function Teacher({ state, dispatch }: StageProps) {
   );
 
   if (present) {
-    return (
-      <div role="dialog" aria-modal="true" aria-label="Present mode" className="atmosphere fixed inset-0 z-50 overflow-y-auto">
-        <div className="sticky top-0 z-10 flex justify-end bg-ink-950/80 px-4 py-3 backdrop-blur">
-          <Button variant="secondary" size="sm" onClick={() => setPresent(false)} autoFocus>
-            <Minimize2 aria-hidden className="size-4" /> Exit Present mode
-          </Button>
-        </div>
-        {body}
-      </div>
-    );
+    return <PresentDialog onClose={() => setPresent(false)}>{body}</PresentDialog>;
   }
 
   return (
@@ -179,6 +163,30 @@ export function Teacher({ state, dispatch }: StageProps) {
       </div>
       {body}
     </>
+  );
+}
+
+/** Native modal dialog: traps focus, makes the page behind inert, closes on Escape. */
+function PresentDialog({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (d && !d.open) d.showModal();
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      aria-label="Present mode"
+      onClose={onClose}
+      className="atmosphere fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto p-0 text-text backdrop:bg-ink-950"
+    >
+      <div className="sticky top-0 z-10 flex justify-end bg-ink-950/80 px-4 py-3 backdrop-blur">
+        <Button variant="secondary" size="sm" onClick={() => ref.current?.close()} autoFocus>
+          <Minimize2 aria-hidden className="size-4" /> Exit Present mode
+        </Button>
+      </div>
+      {children}
+    </dialog>
   );
 }
 

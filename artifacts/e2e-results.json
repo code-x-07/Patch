@@ -4,9 +4,8 @@
       "/opt/homebrew/Cellar/node/26.7.0/bin/node",
       "/Users/hemantkushwaha/Patch/node_modules/.bin/playwright",
       "test",
-      "e2e/demo.spec.ts",
-      "-g",
-      "375px"
+      "e2e/keyboard.spec.ts",
+      "e2e/demo.spec.ts"
     ],
     "configFile": "/Users/hemantkushwaha/Patch/playwright.config.ts",
     "rootDir": "/Users/hemantkushwaha/Patch/e2e",
@@ -79,6 +78,40 @@
       "line": 0,
       "specs": [
         {
+          "title": "the whole demo loop runs offline after it's ready, with no network requests",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 37807,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T11:07:11.523Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "05384557491ebd602dd7-be9ca8598b3d30184133",
+          "file": "demo.spec.ts",
+          "line": 4,
+          "column": 5
+        },
+        {
           "title": "375px: landing and every student stage fit without horizontal scrolling",
           "ok": true,
           "tags": [],
@@ -94,12 +127,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 37822,
+                  "duration": 37535,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T11:04:00.409Z",
+                  "startTime": "2026-10-03T11:07:50.535Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -111,15 +144,91 @@
           "file": "demo.spec.ts",
           "line": 43,
           "column": 5
+        },
+        {
+          "title": "reduced motion: the demo completes and decorative motion is off",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6154,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T11:08:28.081Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "05384557491ebd602dd7-bba5493a2071ded8a34e",
+          "file": "demo.spec.ts",
+          "line": 63,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "keyboard.spec.ts",
+      "file": "keyboard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "keyboard only: answer a question, reach the map, inspect a node, use Present mode",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 37288,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T11:08:34.250Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "866d5cea7c69e902a1e2-2153a1ea47f2fe49527e",
+          "file": "keyboard.spec.ts",
+          "line": 4,
+          "column": 5
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-03T11:03:54.170Z",
-    "duration": 45158.27,
-    "expected": 1,
+    "startTime": "2026-10-03T11:07:05.225Z",
+    "duration": 126535.626,
+    "expected": 4,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
