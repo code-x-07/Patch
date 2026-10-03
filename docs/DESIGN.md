@@ -15,7 +15,7 @@ The ui-ux-pro-max auto-recommendation (Baloo 2/Comic Neue, light background, "av
 ## Type
 
 - **Bricolage Grotesque** for display moments: hero, Boss Fight, Root Gap reveal, ROOT GAP DEFEATED, TRANSFER VERIFIED.
-- **Atkinson Hyperlegible Next** for everything else, especially maths: it was designed to keep 1/l/I, 0/O and the minus sign distinct. Tabular lining numerals.
+- **Atkinson Hyperlegible** (the original family, which has fallback metrics so font swap causes no layout shift; weights 400 and 700) for everything else, especially maths: it was designed to keep 1/l/I, 0/O and the minus sign distinct. Tabular lining numerals.
 - Maths is authored as ASCII and rendered with a true minus (−) and superscript ² via `formatMath`.
 - All caps only where the spec names a stamp (TRACE MY GAP, ROOT GAP DEFEATED, TRANSFER VERIFIED, BOSS FIGHT). Sentence case elsewhere; no eyebrow labels on every heading.
 

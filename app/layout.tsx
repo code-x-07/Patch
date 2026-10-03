@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from "next/font/google";
+import { Atkinson_Hyperlegible, Bricolage_Grotesque } from "next/font/google";
 import { APP_NAME, DESCRIPTION, TAGLINE } from "@/lib/config";
 import "./globals.css";
 
@@ -9,7 +9,8 @@ const display = Bricolage_Grotesque({
   display: "swap",
 });
 
-const text = Atkinson_Hyperlegible_Next({
+const text = Atkinson_Hyperlegible({
+  weight: ["400", "700"],
   variable: "--font-atkinson",
   subsets: ["latin"],
   display: "swap",
