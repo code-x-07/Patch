@@ -1,38 +1,40 @@
 import type { SkillId } from "./types";
 
 /**
- * Hand-tuned Knowledge Map layout in a 400 × 620 viewBox. Prerequisites sit
- * below what they unlock. The demo's root-gap trace runs up a clean vertical
- * spine at x = 200: S4 → S2 → S3 → S8 → S9 → S10 → S13, then S17.
+ * Knowledge Map layout in a 440 × 630 viewBox, on a 5-column grid. Positions
+ * come from a small optimiser (prerequisites always below what they unlock,
+ * crossings and lines near other skills minimised). The demo's root-gap trace
+ * runs up a straight spine at x = 220: S4 → S2 → S3 → S8 → S9 → S10 → S13 → S17.
+ * One crossing (S9→S12 with S11→S13) is unavoidable with that spine.
  */
-export const MAP_W = 400;
-export const MAP_H = 620;
+export const MAP_W = 440;
+export const MAP_H = 630;
 
 export const layout: Record<SkillId, { x: number; y: number }> = {
-  S17: { x: 150, y: 42 },
-  S13: { x: 200, y: 112 },
-  S12: { x: 338, y: 112 },
-  S16: { x: 62, y: 150 },
-  S10: { x: 200, y: 186 },
-  S11: { x: 296, y: 222 },
-  S14: { x: 62, y: 256 },
-  S9: { x: 200, y: 260 },
-  S19: { x: 360, y: 268 },
-  S7: { x: 116, y: 330 },
-  S8: { x: 200, y: 334 },
-  S6: { x: 284, y: 336 },
-  S18: { x: 360, y: 362 },
-  S15: { x: 46, y: 378 },
-  S3: { x: 200, y: 408 },
-  S5: { x: 300, y: 432 },
-  S1: { x: 108, y: 470 },
-  S2: { x: 200, y: 486 },
-  S4: { x: 200, y: 566 },
+  S17: { x: 220, y: 42 },
+  S16: { x: 135, y: 118 },
+  S13: { x: 220, y: 118 },
+  S12: { x: 305, y: 118 },
+  S14: { x: 135, y: 194 },
+  S10: { x: 220, y: 194 },
+  S11: { x: 305, y: 194 },
+  S19: { x: 390, y: 194 },
+  S1: { x: 50, y: 270 },
+  S9: { x: 220, y: 270 },
+  S18: { x: 305, y: 270 },
+  S7: { x: 135, y: 346 },
+  S8: { x: 220, y: 346 },
+  S6: { x: 305, y: 346 },
+  S15: { x: 50, y: 422 },
+  S3: { x: 220, y: 422 },
+  S5: { x: 390, y: 422 },
+  S2: { x: 220, y: 498 },
+  S4: { x: 220, y: 574 },
 };
 
-/** Split a short label into at most two lines of ~13 characters. */
+/** Split a short label into at most two lines, so neighbours in a row never touch. */
 export function labelLines(label: string): string[] {
-  if (label.length <= 13) return [label];
+  if (label.length <= 9 || !label.includes(" ")) return [label];
   const words = label.split(" ");
   let best: [string, string] = [label, ""];
   let bestScore = Infinity;

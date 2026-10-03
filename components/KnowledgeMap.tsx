@@ -43,7 +43,9 @@ function edgePath(layout: CourseInfo["layout"], from: SkillId, to: SkillId) {
   const b = layout[to];
   const y1 = a.y - R;
   const y2 = b.y + R + 2;
-  const dy = (y1 - y2) / 2;
+  // Short vertical lead-in and lead-out; long edges then run nearly straight,
+  // so they don't hug a column and slide behind the skills in it.
+  const dy = Math.min((y1 - y2) / 2, 30);
   // An edge must never look like it passes through another skill: if any node
   // sits near the straight line, bow the curve out to the side away from it.
   let bow = 0;
