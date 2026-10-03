@@ -177,7 +177,7 @@ export const skills: Skill[] = [
     },
   },
   {
-    id: "S13", name: "Factorising quadratics (x^2 + bx + c)", short: "Factorising quadratics", prereqs: ["S10", "S11"],
+    id: "S13", name: "Factorising quadratics (x² + bx + c)", short: "Factorising quadratics", prereqs: ["S10", "S11"],
     description: "Write x² + bx + c as (x + p)(x + q).",
     lesson: {
       idea: "Find two numbers that multiply to c and add to b, signs included. Then check by expanding.",

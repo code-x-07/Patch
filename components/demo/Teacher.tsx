@@ -219,7 +219,7 @@ function Distribution({ report, large }: { report: ClassReport; large: boolean }
       <ul className="mt-4 grid gap-3" aria-hidden>
         {report.distribution.map((d) => (
           <li key={d.skill ?? "other"} className="group grid grid-cols-[minmax(0,11rem)_1fr] items-center gap-3 sm:grid-cols-[minmax(0,15rem)_1fr]" title={`${d.skill ? skillById[d.skill].name : "Other or uncertain"}: ${d.count} students`}>
-            <span className={clsx("truncate font-semibold", large ? "text-xl" : "text-base")}>{d.skill ? skillById[d.skill].name : "Other or uncertain"}</span>
+            <span className={clsx("line-clamp-2 font-semibold leading-snug", large ? "text-xl" : "text-base")}>{d.skill ? skillById[d.skill].name : "Other or uncertain"}</span>
             <span className="flex items-center gap-2">
               <span
                 className="h-6 rounded-r-[4px] bg-beam transition-[width,opacity] duration-[var(--dur-slow)] group-hover:opacity-80"
@@ -273,7 +273,7 @@ function RepairAndStatus({ report, large }: { report: ClassReport; large: boolea
       </section>
 
       <section aria-labelledby="status-h">
-        <h2 id="status-h" className={clsx("font-bold", large ? "text-2xl" : "text-lg")}>Class status on {lc(skillById[report.target].short)}</h2>
+        <h2 id="status-h" className={clsx("font-bold", large ? "text-2xl" : "text-lg")}>Class status now on {lc(skillById[report.target].short)}</h2>
         <div className="mt-3 flex h-4 gap-[2px] overflow-hidden rounded-[4px]" aria-hidden>
           {segs.filter((s) => s.n > 0).map((s) => (
             <span key={s.label} style={{ flexGrow: s.n, background: STATUS[s.st].color }} />

@@ -95,9 +95,10 @@ export function classReport(members: Member[], target: SkillId = TARGET_SKILL): 
     .sort((a, b) => (a.skill === null ? 1 : b.skill === null ? -1 : b.count - a.count));
 
   const studentsByMisconception = new Map<string, Set<string>>();
+  // Class-wide misconceptions come from the shared class quiz, where everyone saw the same questions.
   for (const m of members) {
     for (const a of m.diagnosed.attempts) {
-      if (!a.misconceptionId || a.correct) continue;
+      if (a.phase !== "quiz" || !a.misconceptionId || a.correct) continue;
       if (!studentsByMisconception.has(a.misconceptionId)) studentsByMisconception.set(a.misconceptionId, new Set());
       studentsByMisconception.get(a.misconceptionId)!.add(m.id);
     }
@@ -122,11 +123,14 @@ export function classReport(members: Member[], target: SkillId = TARGET_SKILL): 
   const top = distribution.find((d) => d.skill !== null);
   const recommendation = top && top.skill ? { root: top.skill, target, affected: top.count, classSize } : null;
 
-  // Live-style status: Strong (target solid), Needs Support (confirmed gap), else Developing.
+  // Status now: Strong (target solid now, or never struggled), Needs Support (flagged, uncertain,
+  // or root gap not yet repaired), otherwise Developing.
   let strong = 0, needsSupport = 0;
-  for (const { m, d } of diagnoses) {
-    if (d.status[target] === "known" || d.status[target] === "inferred_known" || strugglingMembers.every((s) => s.m !== m)) strong++;
-    else if (m.rootGaps.length > 0) needsSupport++;
+  for (const { m } of diagnoses) {
+    const now = derive(graph, m.current).status[target];
+    const struggled = strugglingMembers.some((s) => s.m === m);
+    if (!struggled || now === "known" || now === "inferred_known") strong++;
+    else if (m.needsTeacher || m.uncertain || (m.rootGaps.length > 0 && !m.rootDefeated)) needsSupport++;
   }
   return {
     classSize, target, struggling: strugglingMembers.length, heatmap, distribution,

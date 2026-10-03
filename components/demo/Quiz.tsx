@@ -16,7 +16,7 @@ export function Quiz({ state, dispatch, status, follow }: StageProps) {
       <aside className="order-2 hidden lg:order-1 lg:block" aria-label="Your Knowledge Map so far">
         <div className="sticky top-24">
           <p className="mb-2 text-sm font-semibold text-faint">Your map fills in as you answer</p>
-          <MapStage status={status} scope={TARGET_SCOPE} focus={cur.question.skillId} label="Knowledge Map, updating with your answers" />
+          <MapStage status={status} scope={TARGET_SCOPE} focus={cur.question.skillId} label="Knowledge Map, updating with your answers" className="map-fit" />
         </div>
       </aside>
 

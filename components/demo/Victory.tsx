@@ -35,7 +35,7 @@ export function Victory({ state, dispatch, derived, status }: StageProps) {
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12 lg:py-12">
       <section className="order-2 lg:order-1" aria-label="Your repaired path on the Knowledge Map">
         <div className="mx-auto max-w-md lg:sticky lg:top-20 lg:max-w-none">
-          <MapStage status={shownStatus} scope={TARGET_SCOPE} repair={repairEdges} focus={plan?.target} label="Knowledge Map after the mission" />
+          <MapStage status={shownStatus} scope={TARGET_SCOPE} repair={repairEdges} focus={plan?.target} label="Knowledge Map after the mission" className="map-fit" />
         </div>
       </section>
 

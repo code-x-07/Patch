@@ -31,6 +31,7 @@ export function QuestionCard({
   const continueRef = useRef<HTMLButtonElement>(null);
   const answered = !!feedback;
   const chosen = feedback?.attempt.optionIndex ?? selected;
+  const twoCol = question.options.every((o) => o.text.length <= 9);
 
   useEffect(() => {
     if (answered) continueRef.current?.focus();
@@ -56,7 +57,7 @@ export function QuestionCard({
           </p>
         )}
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2" role="presentation">
+        <div className={clsx("mt-6 grid gap-3", twoCol && "sm:grid-cols-2")} role="presentation">
           {question.options.map((o, i) => {
             const isChosen = chosen === i;
             const showCorrect = answered && o.correct;

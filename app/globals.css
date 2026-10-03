@@ -164,3 +164,11 @@ body {
     transform: none;
   }
 }
+
+/* Fit the whole map in the viewport height on large screens. */
+@media (min-width: 1024px) {
+  .map-fit {
+    max-width: calc((100dvh - 8rem) * 0.645);
+    margin-inline: auto;
+  }
+}

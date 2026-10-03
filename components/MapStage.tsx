@@ -30,7 +30,7 @@ export function MapStage({
   } as CSSProperties;
   return (
     <div className={clsx("camera-stage", className)} style={style}>
-      <KnowledgeMap {...map} className="camera-map" />
+      <KnowledgeMap {...map} className="camera-map map-fit" />
     </div>
   );
 }

@@ -60,7 +60,7 @@ export function Intro({ state, dispatch, status, ready }: StageProps & { ready: 
 
       <div className="relative mx-auto w-full max-w-md lg:max-w-none" aria-hidden>
         <div className="absolute inset-[10%] rounded-full bg-beam/10 blur-3xl" />
-        <MapStage status={status} label="Your Knowledge Map, not tested yet" className="relative opacity-80" />
+        <MapStage status={status} label="Your Knowledge Map, not tested yet" className="map-fit relative opacity-80" />
       </div>
     </div>
   );

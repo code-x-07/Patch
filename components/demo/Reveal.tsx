@@ -47,7 +47,7 @@ export function Reveal({ state, dispatch, derived, status }: StageProps) {
             pulse={root}
             focus={root}
             label={`Knowledge Map: root gap at ${skillById[root].name}`}
-            className="relative"
+            className="map-fit relative"
           />
         </div>
       </section>

@@ -44,11 +44,18 @@ describe("simulated class", () => {
   it("raises a class-wide misconception only above 30%", () => {
     const negNeg = report.misconceptions.find((m) => m.misconception.id === "neg_times_neg_negative");
     const chose = members.filter((m) =>
-      m.diagnosed.attempts.some((a) => !a.correct && a.misconceptionId === "neg_times_neg_negative"),
+      m.diagnosed.attempts.some((a) => a.phase === "quiz" && !a.correct && a.misconceptionId === "neg_times_neg_negative"),
     ).length;
     expect(negNeg?.students).toBe(chose);
     expect(negNeg?.classWide).toBe(true);
     for (const m of report.misconceptions) expect(m.classWide).toBe(m.share > 0.3);
+  });
+
+  it("class status counts add up to the class size", () => {
+    const { strong, developing, needsSupport } = report.status;
+    expect(strong + developing + needsSupport).toBe(report.classSize);
+    // Grace never struggled; 9 transferred; Kofi and Hugo need support.
+    expect(needsSupport).toBe(2);
   });
 
   it("computes repair outcomes from the same attempts", () => {

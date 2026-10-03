@@ -29,7 +29,7 @@ export function MapView({ state, dispatch, derived, status }: StageProps) {
           selected={selected}
           onSelect={setSelected}
           label="Your Knowledge Map. Each skill is a button showing its status."
-          className="mt-4 max-w-xl lg:max-w-none"
+          className="map-fit mt-4 max-w-xl lg:max-w-none"
         />
       </section>
 
