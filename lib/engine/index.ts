@@ -1,7 +1,8 @@
-import { skills } from "../content/skills";
-import { buildGraph } from "./graph";
+import "./demoBank";
+import { skillGraph } from "./skillGraph";
 
 export * from "./types";
+export * from "./bank";
 export * from "./graph";
 export * from "./evidence";
 export * from "./mastery";
@@ -11,4 +12,4 @@ export * from "./diagnose";
 export * from "./mission";
 
 /** The demo algebra graph, validated (throws on cycles or missing prerequisites). */
-export const graph = buildGraph(skills);
+export const graph = skillGraph;

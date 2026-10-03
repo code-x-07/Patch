@@ -3,22 +3,21 @@
 import { Timer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { OBJECTIVE_NAME } from "@/lib/content/skills";
-import { DEMO_STUDENT, QUIZ, scriptedAnswer } from "@/lib/demo/script";
-import { TARGET_SCOPE } from "@/lib/demo/view";
+import { TARGET_SCOPE } from "@/lib/scope";
 import { MapStage } from "../MapStage";
 import { QuestionCard } from "./QuestionCard";
-import type { StageProps } from "./types";
+import { cardFeedback, cardQuestion, type StageProps } from "./types";
 
-export function Quiz({ state, dispatch, status, follow }: StageProps) {
-  const cur = state.current!;
-  const n = state.quizIndex + 1;
-  const scripted = follow ? scriptedAnswer(DEMO_STUDENT, cur.question, cur.phase) : null;
+export function Quiz({ view, act, scripted, busy }: StageProps) {
+  const cur = view.current!;
+  const n = view.quizIndex + 1;
+  const total = view.quizTotal;
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:py-10">
       <aside className="order-2 hidden lg:order-1 lg:block" aria-label="Your Knowledge Map so far">
         <div className="sticky top-24">
           <p className="mb-2 text-sm font-semibold text-faint">Your map fills in as you answer</p>
-          <MapStage status={status} scope={TARGET_SCOPE} focus={cur.question.skillId} label="Knowledge Map, updating with your answers" className="map-fit" />
+          <MapStage status={view.status} scope={TARGET_SCOPE} focus={cur.question.skillId} label="Knowledge Map, updating with your answers" className="map-fit" />
         </div>
       </aside>
 
@@ -28,27 +27,28 @@ export function Quiz({ state, dispatch, status, follow }: StageProps) {
             Class Fight: {OBJECTIVE_NAME}
           </h1>
           <span className="flex items-center gap-3 text-sm font-semibold text-faint tabular-nums">
-            <QuestionTimer key={cur.question.id} running={!state.feedback} />
-            <span>{n} / {QUIZ.length}</span>
+            <QuestionTimer key={cur.question.id} running={!view.feedback} />
+            <span>{n} / {total}</span>
           </span>
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-800" role="progressbar" aria-valuemin={0} aria-valuemax={QUIZ.length} aria-valuenow={n - 1} aria-label="Quiz progress">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-800" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={n - 1} aria-label="Quiz progress">
           <div
             className="h-full rounded-full bg-beam transition-[width] duration-[var(--dur-slow)] ease-out"
-            style={{ width: `${((n - (state.feedback ? 0 : 1)) / QUIZ.length) * 100}%` }}
+            style={{ width: `${((n - (view.feedback ? 0 : 1)) / total) * 100}%` }}
           />
         </div>
 
         <div className="mt-8">
           <QuestionCard
             key={cur.question.id}
-            question={cur.question}
-            feedback={state.feedback}
+            question={cardQuestion(cur.question)}
+            feedback={cardFeedback(view.feedback)}
             scripted={scripted}
-            heading={`Question ${n} of ${QUIZ.length}`}
-            onAnswer={(optionIndex, confidence) => dispatch({ type: "answer", optionIndex, confidence })}
-            onContinue={() => dispatch({ type: "continue" })}
-            continueLabel={n === QUIZ.length ? "See my Fight Report" : "Next question"}
+            busy={busy}
+            heading={`Question ${n} of ${total}`}
+            onAnswer={(optionIndex, confidence) => act({ type: "answer", optionIndex, confidence })}
+            onContinue={() => act({ type: "continue" })}
+            continueLabel={n === total ? "See my Fight Report" : "Next question"}
           />
         </div>
         <p className="mt-6 text-sm text-faint">The timer is there to keep pace. Speed never earns points; understanding does.</p>

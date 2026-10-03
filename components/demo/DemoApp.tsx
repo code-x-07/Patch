@@ -3,11 +3,9 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { RotateCcw } from "lucide-react";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { APP_NAME } from "@/lib/config";
-import { initialState, reducer, type Stage } from "@/lib/demo/flow";
-import { displayStatus } from "@/lib/demo/view";
-import { derive, graph } from "@/lib/engine";
+import type { Action, DemoState, Stage } from "@/lib/demo/flow";
 import { Wordmark } from "../ui";
 import { Intro } from "./Intro";
 import { MapView } from "./MapView";
@@ -17,6 +15,7 @@ import { Report } from "./Report";
 import { Reveal } from "./Reveal";
 import { Teacher } from "./Teacher";
 import { Trace } from "./Trace";
+import type { DemoRuntime } from "./types";
 import { Victory } from "./Victory";
 
 const LOOP: { label: string; stages: Stage[] }[] = [
@@ -28,30 +27,48 @@ const LOOP: { label: string; stages: Stage[] }[] = [
 ];
 
 export function DemoApp() {
-  const [state, dispatch] = useReducer(reducer, undefined, () => initialState());
-  const [ready, setReady] = useState(false);
+  const [runtime, setRuntime] = useState<DemoRuntime | null>(null);
+  const [changed, setState] = useState<DemoState | null>(null);
+  const [fastPick, setFastPick] = useState(false);
   const [follow, setFollow] = useState(true);
   const mainRef = useRef<HTMLElement>(null);
 
-  // Everything the loop needs is in this bundle; wait for fonts before enabling Start.
+  // Load the demo runtime (engine, content, answer key) and fonts *before* enabling
+  // Start. After that the whole loop runs offline: nothing else is fetched.
   useEffect(() => {
     let alive = true;
-    document.fonts.ready.then(() => alive && setReady(true));
+    Promise.all([import("@/lib/demo/runtime"), document.fonts.ready]).then(([rt]) => alive && setRuntime(rt));
     return () => { alive = false; };
   }, []);
+  const ready = runtime !== null;
+
+  const initial = useMemo(() => runtime?.initialState(fastPick) ?? null, [runtime, fastPick]);
+  const state = changed ?? initial;
+  const dispatch = useCallback(
+    (action: Action) => {
+      if (!runtime) return;
+      if (action.type === "toggleFast" && !changed) return setFastPick((f) => !f);
+      setState((s) => runtime.reducer(s ?? runtime.initialState(fastPick), action));
+    },
+    [runtime, changed, fastPick],
+  );
 
   // New stage: move to the top and put focus on the main region for screen readers.
-  const stage = state.stage;
+  const stage = state?.stage ?? "intro";
   useEffect(() => {
     window.scrollTo({ top: 0 });
     mainRef.current?.focus({ preventScroll: true });
   }, [stage]);
 
-  const derived = useMemo(() => derive(graph, state.learner), [state.learner]);
-  const status = useMemo(() => displayStatus(state, derived), [state, derived]);
+  // The demo builds the same projected view the server sends in Live Mode, so both share every screen.
+  const view = useMemo(() => (runtime && state ? runtime.toLiveView(state) : null), [runtime, state]);
   const loopIndex = LOOP.findIndex((l) => l.stages.includes(stage));
+  const scripted =
+    runtime && follow && state?.current && !state.feedback
+      ? runtime.scriptedAnswer(runtime.DEMO_STUDENT, state.current.question, state.current.phase)
+      : null;
 
-  const shared = { state, dispatch, derived, status, follow };
+  const shared = view ? { view, act: dispatch, scripted, mode: "demo" as const } : null;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -100,15 +117,22 @@ export function DemoApp() {
       </header>
 
       <main ref={mainRef} tabIndex={-1} className="flex-1 outline-none" aria-label="Demo">
-        {stage === "intro" && <Intro {...shared} ready={ready} />}
-        {stage === "quiz" && <Quiz {...shared} />}
-        {stage === "report" && <Report {...shared} />}
-        {stage === "trace" && <Trace {...shared} />}
-        {stage === "reveal" && <Reveal {...shared} />}
-        {(stage === "mission" || stage === "boss") && <Mission {...shared} />}
-        {stage === "victory" && <Victory {...shared} />}
-        {stage === "map" && <MapView {...shared} />}
-        {stage === "teacher" && <Teacher {...shared} />}
+        {stage === "intro" && (
+          <Intro
+            ready={ready}
+            fast={state?.fast ?? fastPick}
+            onStart={() => dispatch({ type: "start" })}
+            onToggleFast={() => dispatch({ type: "toggleFast" })}
+          />
+        )}
+        {shared && stage === "quiz" && <Quiz {...shared} />}
+        {shared && stage === "report" && <Report {...shared} />}
+        {shared && stage === "trace" && <Trace {...shared} />}
+        {shared && stage === "reveal" && <Reveal {...shared} />}
+        {shared && (stage === "mission" || stage === "boss") && <Mission {...shared} />}
+        {shared && stage === "victory" && <Victory {...shared} />}
+        {shared && stage === "map" && <MapView {...shared} />}
+        {runtime && state && stage === "teacher" && <Teacher state={state} dispatch={dispatch} runtime={runtime} />}
       </main>
     </div>
   );

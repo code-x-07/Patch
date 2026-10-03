@@ -3,15 +3,17 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "../useReducedMotion";
 import { skillById, TARGET_SKILL } from "@/lib/content/skills";
-import { DEMO_STUDENT, scriptedAnswer } from "@/lib/demo/script";
-import { estimateRemaining, lc, TARGET_SCOPE } from "@/lib/demo/view";
+import { TARGET_SCOPE } from "@/lib/scope";
+import { lc } from "@/lib/text";
 import type { Edge } from "../KnowledgeMap";
 import { MapStage } from "../MapStage";
 import { StatusChip } from "../status";
 import { QuestionCard } from "./QuestionCard";
-import type { StageProps } from "./types";
+import { cardFeedback, cardQuestion, type StageProps } from "./types";
 
-export function Trace({ state, dispatch, derived, status, follow }: StageProps) {
+export function Trace({ view, act, scripted, busy }: StageProps) {
+  const state = view;
+  const status = view.status;
   const reduced = useReducedMotion();
   // Opening beat: focus the target and dim everything that can't explain it.
   const [openingBeat, setOpeningBeat] = useState(state.probes.length === 0);
@@ -37,7 +39,7 @@ export function Trace({ state, dispatch, derived, status, follow }: StageProps) 
   if (arriving && !traced.some((e) => e[0] === arriving[0] && e[1] === arriving[1])) traced.push(arriving);
   const focus = opening ? TARGET_SKILL : cur?.question.skillId ?? null;
   const n = state.probes.length + (state.feedback ? 0 : 1);
-  const about = n + estimateRemaining(derived) - (state.feedback ? 0 : 1);
+  const about = n + view.remaining - (state.feedback ? 0 : 1);
 
   const reasonText =
     !skill ? "" :
@@ -84,12 +86,13 @@ export function Trace({ state, dispatch, derived, status, follow }: StageProps) 
             <p className="mb-4 text-base text-muted">{reasonText}</p>
             <QuestionCard
               key={cur.question.id}
-              question={cur.question}
-              feedback={state.feedback}
-              scripted={follow ? scriptedAnswer(DEMO_STUDENT, cur.question, cur.phase) : null}
+              question={cardQuestion(cur.question)}
+              feedback={cardFeedback(state.feedback)}
+              scripted={scripted}
+              busy={busy}
               heading={skill!.name}
-              onAnswer={(optionIndex, confidence) => dispatch({ type: "answer", optionIndex, confidence })}
-              onContinue={() => dispatch({ type: "continue" })}
+              onAnswer={(optionIndex, confidence) => act({ type: "answer", optionIndex, confidence })}
+              onContinue={() => act({ type: "continue" })}
               continueLabel="Keep tracing"
               compactFeedback
             />

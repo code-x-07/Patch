@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useReducedMotion } from "../useReducedMotion";
 import { skillById } from "@/lib/content/skills";
 import type { SkillId } from "@/lib/content/types";
-import { lc, TARGET_SCOPE } from "@/lib/demo/view";
+import { TARGET_SCOPE } from "@/lib/scope";
+import { lc } from "@/lib/text";
 import type { Edge } from "../KnowledgeMap";
 import { MapStage } from "../MapStage";
 import { StatusChip } from "../status";
@@ -12,7 +13,9 @@ import { Button } from "../ui";
 import type { StageProps } from "./types";
 
 /** ROOT GAP DEFEATED → path repairs → TRANSFER VERIFIED, each beat driven by real evidence. */
-export function Victory({ state, dispatch, derived, status }: StageProps) {
+export function Victory({ view, act, mode }: StageProps) {
+  const state = view;
+  const status = view.status;
   const reduced = useReducedMotion();
   const [timedBeat, setBeat] = useState(0);
   useEffect(() => {
@@ -23,13 +26,13 @@ export function Victory({ state, dispatch, derived, status }: StageProps) {
   const beat = reduced ? 3 : timedBeat;
 
   const result = state.result!;
-  const plan = state.mission?.plan;
+  const plan = state.mission;
   const path: SkillId[] = plan?.path ?? [];
   const repairEdges: Edge[] = beat >= 2 ? path.slice(0, -1).map((id, i) => [id, path[i + 1]] as Edge) : [];
   // Before the path "repairs", show the diagnosed state; after, the real current state.
   const shownStatus = beat >= 2 ? status : { ...status, ...(plan ? { [plan.root]: "root_gap" as const } : {}) };
 
-  const rising = (id: SkillId) => derived.direct[id].status === "suspect" && derived.direct[id].passQs.length > 0;
+  const rising = (id: SkillId) => view.rising.includes(id);
 
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12 lg:py-12">
@@ -88,8 +91,8 @@ export function Victory({ state, dispatch, derived, status }: StageProps) {
         )}
         <Reveal on={beat >= 3}>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" onClick={() => dispatch({ type: "goto", stage: "map" })}>Open my Knowledge Map</Button>
-            <Button size="lg" variant="secondary" onClick={() => dispatch({ type: "goto", stage: "teacher" })}>See the teacher view</Button>
+            <Button size="lg" onClick={() => act({ type: "goto", stage: "map" })}>Open my Knowledge Map</Button>
+            {mode === "demo" && <Button size="lg" variant="secondary" onClick={() => act({ type: "goto", stage: "teacher" })}>See the teacher view</Button>}
           </div>
         </Reveal>
       </section>

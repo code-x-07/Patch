@@ -1,15 +1,10 @@
-import { misconceptions } from "../content/misconceptions";
-import { questionsForSkill } from "../content/questions";
 import type { Misconception, Question, QuestionKind, SkillId } from "../content/types";
+import { resolveBank, type ContentBank } from "./bank";
 import type { Graph } from "./graph";
 import { INITIAL_MASTERY, updateMastery } from "./mastery";
 import type { Attempt, Confidence, Learner, Phase } from "./types";
 
-/** Optional session content. Omitted for the original bundled demo. */
-export type ContentBank = {
-  questions: Question[];
-  misconceptions: Record<string, Misconception>;
-};
+export type { ContentBank };
 
 export function createLearner(g: Graph, initial: Partial<Record<SkillId, number>> = {}): Learner {
   const mastery = {} as Record<SkillId, number>;
@@ -59,7 +54,7 @@ export function answer(
     baseline: phaseStart[skill],
     ...(option.misconceptionId ? { misconceptionId: option.misconceptionId } : {}),
   };
-  const misconception = option.misconceptionId ? (bank?.misconceptions ?? misconceptions)[option.misconceptionId] : undefined;
+  const misconception = option.misconceptionId ? resolveBank(bank).misconceptions[option.misconceptionId] : undefined;
   const recurring =
     !!misconception && learner.attempts.some((a) => a.misconceptionId === misconception.id);
   return {
@@ -94,7 +89,7 @@ export function pickUnseen(
   bank?: ContentBank,
 ): Question | undefined {
   const seen = seenQuestionIds(learner);
-  return (bank ? bank.questions.filter((q) => q.skillId === skill) : questionsForSkill(skill))
+  return resolveBank(bank).questions.filter((q) => q.skillId === skill)
     .filter((q) => kinds.includes(q.kind) && !seen.has(q.id) && !exclude.has(q.id))
     .sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind))[0];
 }
