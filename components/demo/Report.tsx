@@ -4,30 +4,20 @@ import clsx from "clsx";
 import { ChevronDown, Crosshair } from "lucide-react";
 import { useState } from "react";
 import { formatMath } from "@/lib/content/math";
-import { misconceptions } from "@/lib/content/misconceptions";
-import { questionById } from "@/lib/content/questions";
 import { OBJECTIVE_NAME, TARGET_SKILL, skillById } from "@/lib/content/skills";
-import { scoreQuiz } from "@/lib/engine";
 import { Button } from "../ui";
 import type { StageProps } from "./types";
 
-export function Report({ state, dispatch }: StageProps) {
+export function Report({ view, act, busy }: StageProps) {
   const [open, setOpen] = useState(false);
-  const quiz = state.learner.attempts.filter((a) => a.phase === "quiz");
-  const score = scoreQuiz(quiz);
-  const mistakes = quiz.filter((a) => !a.correct);
-  const guessed = quiz.filter((a) => a.confidence === "guess").length;
-  const counts = new Map<string, number>();
-  for (const a of mistakes) if (a.misconceptionId) counts.set(a.misconceptionId, (counts.get(a.misconceptionId) ?? 0) + 1);
-  const recurring = [...counts.entries()].filter(([, n]) => n >= 2).map(([id]) => misconceptions[id]);
-  const confidentlyWrong = mistakes.filter((a) => a.confidence === "sure").length;
-  const targetFailed = quiz.some((a) => a.skillId === TARGET_SKILL && !a.correct);
+  const r = view.report!;
+  const { guesses: guessed, recurring, confidentlyWrong, targetFailed } = r;
   const target = skillById[TARGET_SKILL];
 
   const stats: { value: string; label: string }[] = [
-    { value: `${score.correct}/${score.total}`, label: "answered correctly" },
-    { value: `${score.improvement >= 0 ? "+" : ""}${score.improvement}`, label: "improvement vs. expected" },
-    { value: String(mistakes.length), label: mistakes.length === 1 ? "mistake" : "mistakes" },
+    { value: `${r.correct}/${r.total}`, label: "answered correctly" },
+    { value: `${r.improvement >= 0 ? "+" : ""}${r.improvement}`, label: "improvement vs. expected" },
+    { value: String(r.mistakes), label: r.mistakes === 1 ? "mistake" : "mistakes" },
     { value: String(guessed), label: guessed === 1 ? "answer was a guess" : "answers were guesses" },
   ];
 
@@ -36,7 +26,7 @@ export function Report({ state, dispatch }: StageProps) {
       <div className="anim-rise">
         <p className="text-sm font-semibold text-faint">Your Fight Report</p>
         <h1 className="mt-1 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-          {OBJECTIVE_NAME}: <span className="tabular-nums">{score.percent}%</span>
+          {OBJECTIVE_NAME}: <span className="tabular-nums">{r.percent}%</span>
         </h1>
 
         <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
@@ -57,7 +47,7 @@ export function Report({ state, dispatch }: StageProps) {
         {recurring.length > 0 && (
           <p className="mt-5 rounded-card border border-suspect/40 bg-suspect/[0.07] px-4 py-3 text-base">
             <span className="font-bold text-suspect">Recurring misconception: </span>
-            {recurring.map((m) => m.label).join(", ")}.
+            {recurring.join(", ")}.
           </p>
         )}
       </div>
@@ -76,7 +66,7 @@ export function Report({ state, dispatch }: StageProps) {
             You missed {target.name.toLowerCase()}. Your answers suggest the trouble may start further back. Patch will
             follow the trail one skill at a time and check each step before it tells you anything.
           </p>
-          <Button size="lg" onClick={() => dispatch({ type: "trace" })} className="relative mt-6 w-full font-display text-xl tracking-wide sm:w-auto sm:px-10">
+          <Button size="lg" onClick={() => act({ type: "trace" })} loading={busy} className="relative mt-6 w-full font-display text-xl tracking-wide sm:w-auto sm:px-10">
             TRACE MY GAP
           </Button>
         </section>
@@ -84,7 +74,7 @@ export function Report({ state, dispatch }: StageProps) {
         <section className="mt-10 rounded-panel border border-solid/40 bg-ink-900 p-6">
           <h2 className="text-lg font-bold text-solid">No root gap to chase on this objective</h2>
           <p className="mt-2 text-muted">You solved the target question. Your Knowledge Map shows what&apos;s confirmed so far.</p>
-          <Button className="mt-5" onClick={() => dispatch({ type: "goto", stage: "map" })}>Open my Knowledge Map</Button>
+          <Button className="mt-5" onClick={() => act({ type: "goto", stage: "map" })}>Open my Knowledge Map</Button>
         </section>
       )}
 
@@ -112,14 +102,14 @@ export function Report({ state, dispatch }: StageProps) {
                 </tr>
               </thead>
               <tbody>
-                {score.scored.map(({ attempt, expected, points }) => (
-                  <tr key={attempt.seq} className="border-t border-line">
-                    <td className="math px-3 py-2">{formatMath(questionById[attempt.questionId].text)}</td>
-                    <td className="px-3 py-2 tabular-nums text-muted">{Math.round(expected * 100)}%</td>
-                    <td className={clsx("px-3 py-2 font-semibold", attempt.correct ? "text-solid" : "text-gap")}>
-                      {attempt.correct ? "Right" : "Wrong"}, {attempt.confidence === "sure" ? "sure" : "guess"}
+                {r.rows.map((row, i) => (
+                  <tr key={i} className="border-t border-line">
+                    <td className="math px-3 py-2">{formatMath(row.text)}</td>
+                    <td className="px-3 py-2 tabular-nums text-muted">{Math.round(row.expected * 100)}%</td>
+                    <td className={clsx("px-3 py-2 font-semibold", row.correct ? "text-solid" : "text-gap")}>
+                      {row.correct ? "Right" : "Wrong"}, {row.confidence === "sure" ? "sure" : "guess"}
                     </td>
-                    <td className="px-3 py-2 tabular-nums">{formatMath(points.toFixed(2))}</td>
+                    <td className="px-3 py-2 tabular-nums">{formatMath(row.points.toFixed(2))}</td>
                   </tr>
                 ))}
               </tbody>

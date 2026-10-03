@@ -5,35 +5,28 @@ import { ArrowDown, ChevronDown, CircleHelp } from "lucide-react";
 import { useState } from "react";
 import { skillById, TARGET_SKILL } from "@/lib/content/skills";
 import type { SkillId } from "@/lib/content/types";
-import { evidenceFor, failedChain, lc, TARGET_SCOPE, type EvidenceRow } from "@/lib/demo/view";
-import { byId, graph } from "@/lib/engine";
+import type { EvidenceRowView as EvidenceRow } from "@/lib/live/types";
+import { TARGET_SCOPE } from "@/lib/scope";
+import { lc } from "@/lib/text";
 import type { Edge } from "../KnowledgeMap";
 import { MapStage } from "../MapStage";
 import { StatusChip } from "../status";
 import { Button } from "../ui";
 import type { StageProps } from "./types";
 
-export function Reveal({ state, dispatch, derived, status }: StageProps) {
+export function Reveal({ view, act, busy, mode }: StageProps) {
+  const state = view;
+  const status = view.status;
   const [why, setWhy] = useState(false);
   const diagnosis = state.diagnosis!;
   const root = diagnosis.rootGaps[0];
   const target = skillById[TARGET_SKILL];
 
-  if (!root) return <Uncertain {...{ state, dispatch, status }} unresolved={diagnosis.unresolved} />;
+  if (!root || !view.reveal) return <Uncertain act={act} status={status} unresolved={diagnosis.unresolved} mode={mode} />;
 
-  const chain = failedChain(derived, root);
+  const { chain, rows: chainRows, others } = view.reveal;
   const chainEdges: Edge[] = chain.slice(0, -1).map((id, i) => [chain[i + 1], id] as Edge);
   const tested = state.probes.length;
-  const learner = state.learner;
-  const foundation = graph.prereqs[root];
-  const chainRows = [...chain, ...foundation].map((id) => evidenceFor(learner, id, derived));
-  // Ancestors of the foundation that were inferred.
-  const deeper = [...new Set(foundation.flatMap((f) => graph.prereqs[f]))].filter((id) => derived.status[id] !== "unknown");
-  const shown = new Set<SkillId>([...chain, ...foundation, ...deeper]);
-  const others = [...TARGET_SCOPE]
-    .filter((id) => !shown.has(id) && derived.status[id] !== "unknown")
-    .sort(byId)
-    .map((id) => evidenceFor(learner, id, derived));
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 pb-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12 lg:py-10">
@@ -69,10 +62,10 @@ export function Reveal({ state, dispatch, derived, status }: StageProps) {
         </ol>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button size="lg" onClick={() => dispatch({ type: "beginMission" })} className="sm:px-8">
+          <Button size="lg" onClick={() => act({ type: "beginMission" })} loading={busy} className="sm:px-8">
             Start my Root Gap Mission
           </Button>
-          <Button variant="ghost" size="lg" onClick={() => dispatch({ type: "dispute" })}>
+          <Button variant="ghost" size="lg" onClick={() => act({ type: "dispute" })} disabled={busy}>
             That doesn&apos;t sound right
           </Button>
         </div>
@@ -103,9 +96,6 @@ export function Reveal({ state, dispatch, derived, status }: StageProps) {
                     <Row row={row} />
                     {i < chain.length - 1 && <ArrowDown aria-hidden className="my-1 ml-2 size-4 text-faint" />}
                   </li>
-                ))}
-                {deeper.map((id) => (
-                  <li key={id}><Row row={evidenceFor(learner, id, derived)} /></li>
                 ))}
               </ol>
               {others.length > 0 && (
@@ -158,7 +148,7 @@ function Row({ row }: { row: EvidenceRow }) {
   );
 }
 
-function Uncertain({ dispatch, status, unresolved }: Pick<StageProps, "state" | "dispatch" | "status"> & { unresolved: SkillId[] }) {
+function Uncertain({ act, status, unresolved, mode }: Pick<StageProps, "act" | "mode"> & { status: StageProps["view"]["status"]; unresolved: SkillId[] }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <h1 className="font-display text-4xl font-bold text-balance">Patch couldn&apos;t pin this one down.</h1>
@@ -171,8 +161,8 @@ function Uncertain({ dispatch, status, unresolved }: Pick<StageProps, "state" | 
         <MapStage status={status} scope={TARGET_SCOPE} label="Knowledge Map after an uncertain diagnosis" />
       </div>
       <div className="mt-6 flex gap-3">
-        <Button onClick={() => dispatch({ type: "goto", stage: "map" })}>Open my Knowledge Map</Button>
-        <Button variant="secondary" onClick={() => dispatch({ type: "reset" })}>Reset demo</Button>
+        <Button onClick={() => act({ type: "goto", stage: "map" })}>Open my Knowledge Map</Button>
+        {mode === "demo" && <Button variant="secondary" onClick={() => act({ type: "reset" })}>Reset demo</Button>}
       </div>
     </div>
   );

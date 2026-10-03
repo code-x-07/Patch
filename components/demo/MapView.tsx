@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 import { formatMath } from "@/lib/content/math";
-import { questionById } from "@/lib/content/questions";
 import { skillById, TARGET_SKILL } from "@/lib/content/skills";
 import type { SkillId } from "@/lib/content/types";
-import { evidenceFor } from "@/lib/demo/view";
-import { graph } from "@/lib/engine";
+import { skillGraph as graph } from "@/lib/engine/skillGraph";
 import { MapStage } from "../MapStage";
 import { Legend, StatusChip } from "../status";
 import { Button } from "../ui";
 import type { StageProps } from "./types";
 
-export function MapView({ state, dispatch, derived, status }: StageProps) {
-  const [selected, setSelected] = useState<SkillId>(state.mission?.plan.root ?? TARGET_SKILL);
+export function MapView({ view, act, mode }: StageProps) {
+  const state = view;
+  const status = view.status;
+  const [selected, setSelected] = useState<SkillId>(state.mission?.root ?? TARGET_SKILL);
   const skill = skillById[selected];
-  const row = evidenceFor(state.learner, selected, derived);
-  const attempts = state.learner.attempts.filter((a) => a.skillId === selected);
+  const row = view.evidence[selected] ?? { detail: "Not tested", answers: [] };
+  const attempts = row.answers;
 
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:py-10">
@@ -45,9 +45,9 @@ export function MapView({ state, dispatch, derived, status }: StageProps) {
 
           {attempts.length > 0 && (
             <ul className="mt-5 grid gap-2" aria-label="Answers on this skill">
-              {attempts.map((a) => (
-                <li key={a.seq} className="flex flex-wrap items-baseline justify-between gap-2 rounded-card bg-ink-800/70 px-3 py-2">
-                  <span className="math">{formatMath(questionById[a.questionId].text)}</span>
+              {attempts.map((a, i) => (
+                <li key={i} className="flex flex-wrap items-baseline justify-between gap-2 rounded-card bg-ink-800/70 px-3 py-2">
+                  <span className="math">{formatMath(a.text)}</span>
                   <span className={a.correct ? "text-sm font-semibold text-solid" : "text-sm font-semibold text-gap"}>
                     {a.correct ? "Right" : "Wrong"}, {a.confidence}
                     {a.disputed ? " (disputed)" : ""}
@@ -72,8 +72,8 @@ export function MapView({ state, dispatch, derived, status }: StageProps) {
         </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-          <Button onClick={() => dispatch({ type: "goto", stage: "teacher" })}>See the teacher view</Button>
-          {state.result && <Button variant="secondary" onClick={() => dispatch({ type: "goto", stage: "victory" })}>Back to my result</Button>}
+          {mode === "demo" && <Button onClick={() => act({ type: "goto", stage: "teacher" })}>See the teacher view</Button>}
+          {state.result && <Button variant="secondary" onClick={() => act({ type: "goto", stage: "victory" })}>Back to my result</Button>}
         </div>
       </aside>
     </div>

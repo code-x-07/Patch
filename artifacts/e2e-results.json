@@ -1,15 +1,14 @@
 {
   "config": {
     "argv": [
-      "/Users/arush/.hermes/node/bin/node",
-      "/Users/arush/Coding/Patch/node_modules/.bin/playwright",
+      "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+      "/Users/hemantkushwaha/Patch/node_modules/.bin/playwright",
       "test",
-      "learning.spec.ts",
-      "demo.spec.ts",
-      "keyboard.spec.ts"
+      "e2e/demo.spec.ts",
+      "e2e/keyboard.spec.ts"
     ],
-    "configFile": "/Users/arush/Coding/Patch/playwright.config.ts",
-    "rootDir": "/Users/arush/Coding/Patch/e2e",
+    "configFile": "/Users/hemantkushwaha/Patch/playwright.config.ts",
+    "rootDir": "/Users/hemantkushwaha/Patch/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -25,7 +24,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/arush/Coding/Patch/test-results",
+        "outputDir": "/Users/hemantkushwaha/Patch/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -33,7 +32,7 @@
         },
         "id": "",
         "name": "",
-        "testDir": "/Users/arush/Coding/Patch/e2e",
+        "testDir": "/Users/hemantkushwaha/Patch/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -64,7 +63,12 @@
     "updateSourceMethod": "patch",
     "version": "1.63.0",
     "workers": 1,
-    "webServer": null
+    "webServer": {
+      "command": "npm run build && npx next start -p 3200",
+      "url": "http://localhost:3200",
+      "timeout": 240000,
+      "reuseExistingServer": true
+    }
   },
   "suites": [
     {
@@ -89,12 +93,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 56989,
+                  "duration": 58806,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T14:11:23.195Z",
+                  "startTime": "2026-10-03T14:41:09.372Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -123,12 +127,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 58532,
+                  "duration": 58818,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T14:12:20.949Z",
+                  "startTime": "2026-10-03T14:42:14.850Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -157,12 +161,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3167,
+                  "duration": 5126,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T14:13:19.489Z",
+                  "startTime": "2026-10-03T14:43:13.682Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -199,12 +203,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 58043,
+                  "duration": 59538,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-03T14:13:22.671Z",
+                  "startTime": "2026-10-03T14:43:18.826Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -218,191 +222,13 @@
           "column": 5
         }
       ]
-    },
-    {
-      "title": "learning.spec.ts",
-      "file": "learning.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "individual session: generated preview through trace, mission, transfer and map on mobile",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 120000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 30276,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-03T14:14:20.753Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "e0ec79b0c4f511f16424-e0d327a2dad972544f7e",
-          "file": "learning.spec.ts",
-          "line": 11,
-          "column": 5
-        },
-        {
-          "title": "PDF upload and generation errors are recoverable",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 120000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 340,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-03T14:14:51.035Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "e0ec79b0c4f511f16424-1ae05aefaf2622ccb050",
-          "file": "learning.spec.ts",
-          "line": 60,
-          "column": 5
-        },
-        {
-          "title": "desktop preview and keyboard-only answer work",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 120000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 616,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-03T14:14:51.380Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "e0ec79b0c4f511f16424-657a97fcdcae70b37cbe",
-          "file": "learning.spec.ts",
-          "line": 72,
-          "column": 5
-        },
-        {
-          "title": "real generation route rejects cross-origin and unconfigured/empty requests",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 120000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 50,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-03T14:14:52.003Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "e0ec79b0c4f511f16424-7c58f3e01beb7f4b3863",
-          "file": "learning.spec.ts",
-          "line": 90,
-          "column": 5
-        },
-        {
-          "title": "landing keeps both learning and the original demo reachable",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 120000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 403,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-03T14:14:52.058Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "e0ec79b0c4f511f16424-f86434c70df1446243b1",
-          "file": "learning.spec.ts",
-          "line": 100,
-          "column": 5
-        }
-      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-03T14:11:22.932Z",
-    "duration": 209629.74000000002,
-    "expected": 9,
+    "startTime": "2026-10-03T14:41:00.110Z",
+    "duration": 198520.29,
+    "expected": 4,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

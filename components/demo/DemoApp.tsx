@@ -6,8 +6,8 @@ import { RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { APP_NAME } from "@/lib/config";
 import { initialState, reducer, type Stage } from "@/lib/demo/flow";
-import { displayStatus } from "@/lib/demo/view";
-import { derive, graph } from "@/lib/engine";
+import { DEMO_STUDENT, scriptedAnswer } from "@/lib/demo/script";
+import { toLiveView } from "@/lib/live/view";
 import { Wordmark } from "../ui";
 import { Intro } from "./Intro";
 import { MapView } from "./MapView";
@@ -47,11 +47,15 @@ export function DemoApp() {
     mainRef.current?.focus({ preventScroll: true });
   }, [stage]);
 
-  const derived = useMemo(() => derive(graph, state.learner), [state.learner]);
-  const status = useMemo(() => displayStatus(state, derived), [state, derived]);
+  // The demo builds the same projected view the server sends in Live Mode, so both share every screen.
+  const view = useMemo(() => toLiveView(state), [state]);
+  const status = view.status;
   const loopIndex = LOOP.findIndex((l) => l.stages.includes(stage));
+  const scripted =
+    follow && state.current && !state.feedback ? scriptedAnswer(DEMO_STUDENT, state.current.question, state.current.phase) : null;
 
-  const shared = { state, dispatch, derived, status, follow };
+  const shared = { view, act: dispatch, scripted, mode: "demo" as const };
+  const demoOnly = { state, dispatch, status };
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -100,7 +104,7 @@ export function DemoApp() {
       </header>
 
       <main ref={mainRef} tabIndex={-1} className="flex-1 outline-none" aria-label="Demo">
-        {stage === "intro" && <Intro {...shared} ready={ready} />}
+        {stage === "intro" && <Intro {...demoOnly} ready={ready} />}
         {stage === "quiz" && <Quiz {...shared} />}
         {stage === "report" && <Report {...shared} />}
         {stage === "trace" && <Trace {...shared} />}
@@ -108,7 +112,7 @@ export function DemoApp() {
         {(stage === "mission" || stage === "boss") && <Mission {...shared} />}
         {stage === "victory" && <Victory {...shared} />}
         {stage === "map" && <MapView {...shared} />}
-        {stage === "teacher" && <Teacher {...shared} />}
+        {stage === "teacher" && <Teacher {...demoOnly} />}
       </main>
     </div>
   );

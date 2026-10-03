@@ -6,9 +6,9 @@ import { CLASSMATES } from "@/lib/demo/classroom";
 import { QUIZ } from "@/lib/demo/script";
 import { MapStage } from "../MapStage";
 import { Button } from "../ui";
-import type { StageProps } from "./types";
+import type { DemoOnlyProps } from "./types";
 
-export function Intro({ state, dispatch, status, ready }: StageProps & { ready: boolean }) {
+export function Intro({ state, dispatch, status, ready }: DemoOnlyProps & { ready: boolean }) {
   return (
     <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
       <div className="anim-rise">

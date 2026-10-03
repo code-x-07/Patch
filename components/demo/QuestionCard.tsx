@@ -21,10 +21,12 @@ type Props = {
   continueLabel?: string;
   /** In diagnosis, feedback is kept short so the trace keeps moving. */
   compactFeedback?: boolean;
+  /** A request is in flight: lock the controls so nothing is submitted twice. */
+  busy?: boolean;
 };
 
 export function QuestionCard({
-  question, feedback, onAnswer, onContinue, scripted, heading, context, tone = "default", continueLabel = "Continue", compactFeedback,
+  question, feedback, onAnswer, onContinue, scripted, heading, context, tone = "default", continueLabel = "Continue", compactFeedback, busy,
 }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const legendId = useId();
@@ -122,8 +124,8 @@ export function QuestionCard({
                 key={c}
                 variant={c === "sure" && selected !== null ? "primary" : "secondary"}
                 size="lg"
-                disabled={selected === null}
-                onClick={() => selected !== null && onAnswer(selected, c)}
+                disabled={selected === null || busy}
+                onClick={() => selected !== null && !busy && onAnswer(selected, c)}
                 className="relative"
               >
                 {c === "sure" ? "I'm sure" : "Guessing"}
@@ -138,7 +140,7 @@ export function QuestionCard({
 
       {feedback && (
         <FeedbackPanel feedback={feedback} compact={compactFeedback} display={display}>
-          <Button ref={continueRef} onClick={onContinue} size="lg" className="mt-5 w-full sm:w-auto">
+          <Button ref={continueRef} onClick={onContinue} loading={busy} size="lg" className="mt-5 w-full sm:w-auto">
             {continueLabel}
           </Button>
         </FeedbackPanel>

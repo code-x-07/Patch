@@ -1,13 +1,13 @@
 import { questionById } from "../content/questions";
 import { skillById, TARGET_SKILL } from "../content/skills";
 import type { SkillId } from "../content/types";
-import { ancestors, derive, graph, isSolid, type Derived, type Learner, type Status } from "../engine";
+import { derive, graph, isSolid, type Derived, type Learner, type Status } from "../engine";
+import { TARGET_SCOPE } from "../scope";
 import type { DemoState } from "./flow";
 
-/** Lower-case the first letter of a name for use mid-sentence. */
-export const lc = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+export { lc } from "../text";
 
-export const TARGET_SCOPE: ReadonlySet<SkillId> = new Set<SkillId>([TARGET_SKILL, ...ancestors(graph, TARGET_SKILL)]);
+export { TARGET_SCOPE } from "../scope";
 
 /** Status shown on the map: the derived status, with the mission's root shown as Repairing. */
 export function displayStatus(state: DemoState, derived: Derived): Record<SkillId, Status> {

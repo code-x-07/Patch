@@ -3,22 +3,23 @@
 import clsx from "clsx";
 import { Check, Swords } from "lucide-react";
 import { formatMath } from "@/lib/content/math";
-import { questionById } from "@/lib/content/questions";
 import { skillById } from "@/lib/content/skills";
 import type { Skill, SkillId } from "@/lib/content/types";
-import { DEMO_STUDENT, scriptedAnswer } from "@/lib/demo/script";
-import { lc } from "@/lib/demo/view";
-import type { Status } from "@/lib/engine";
+import type { Status } from "@/lib/engine/types";
+import type { LiveView } from "@/lib/live/types";
+import { lc } from "@/lib/text";
 import { STATUS } from "../status";
 import { Button } from "../ui";
 import { QuestionCard } from "./QuestionCard";
-import type { StageProps } from "./types";
+import { cardFeedback, cardQuestion, type StageProps } from "./types";
 
 type StepKey = "recap" | "lesson" | "practice" | "bridge" | "boss";
 
-export function Mission({ state, dispatch, status, follow }: StageProps) {
-  const m = state.mission!;
-  const { plan } = m;
+export function Mission({ view, act, scripted, busy }: StageProps) {
+  const state = view;
+  const status = view.status;
+  const m = view.mission!;
+  const plan = { ...m, practice: { length: m.practiceCount }, bridges: { length: m.bridgeCount } };
   const root = skillById[plan.root];
   const target = skillById[plan.target];
   const isBoss = state.stage === "boss";
@@ -42,7 +43,7 @@ export function Mission({ state, dispatch, status, follow }: StageProps) {
       <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:py-10">
         <header>
           <p className="text-sm font-semibold text-faint">
-            Root Gap Mission{state.fast ? " · Fast Mode" : ""}
+            Root Gap Mission{view.fast ? " · Fast Mode" : ""}
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold text-balance sm:text-3xl">
             Repair {lc(root.name)}, then beat {lc(target.short)}.
@@ -70,28 +71,30 @@ export function Mission({ state, dispatch, status, follow }: StageProps) {
 
         <div className="mt-8">
           {m.step === "lesson" && !isBoss ? (
-            <Lesson skill={root} state={state} onDone={() => dispatch({ type: "lessonDone" })} />
+            <Lesson skill={root} recap={view.fast ? [] : m.recap} busy={busy} onDone={() => act({ type: "lessonDone" })} />
           ) : state.current ? (
             isBoss ? (
               <BossFrame role={state.current.role} target={target}>
                 <QuestionCard
                   key={state.current.question.id}
                   tone="boss"
-                  question={state.current.question}
-                  feedback={state.feedback}
-                  scripted={follow ? scriptedAnswer(DEMO_STUDENT, state.current.question, state.current.phase) : null}
+                  question={cardQuestion(state.current.question)}
+                  feedback={cardFeedback(state.feedback)}
+                  scripted={scripted}
+                  busy={busy}
                   heading={state.current.role === "confirm" ? "One more, to lock it in" : "Never seen before"}
-                  onAnswer={(optionIndex, confidence) => dispatch({ type: "answer", optionIndex, confidence })}
-                  onContinue={() => dispatch({ type: "continue" })}
+                  onAnswer={(optionIndex, confidence) => act({ type: "answer", optionIndex, confidence })}
+                  onContinue={() => act({ type: "continue" })}
                   continueLabel={state.current.role === "confirm" || !state.feedback?.correct ? "Continue" : "Lock it in"}
                 />
               </BossFrame>
             ) : (
               <QuestionCard
                 key={state.current.question.id}
-                question={state.current.question}
-                feedback={state.feedback}
-                scripted={follow ? scriptedAnswer(DEMO_STUDENT, state.current.question, state.current.phase) : null}
+                question={cardQuestion(state.current.question)}
+                feedback={cardFeedback(state.feedback)}
+                scripted={scripted}
+                busy={busy}
                 heading={
                   state.current.role === "practice"
                     ? `Practise: ${root.name} (${m.index + 1} of ${plan.practice.length})`
@@ -106,8 +109,8 @@ export function Mission({ state, dispatch, status, follow }: StageProps) {
                       ? "That Boss Fight answer slipped. One quick check, then a fresh retry."
                       : undefined
                 }
-                onAnswer={(optionIndex, confidence) => dispatch({ type: "answer", optionIndex, confidence })}
-                onContinue={() => dispatch({ type: "continue" })}
+                onAnswer={(optionIndex, confidence) => act({ type: "answer", optionIndex, confidence })}
+                onContinue={() => act({ type: "continue" })}
               />
             )
           ) : null}
@@ -148,27 +151,22 @@ function QuestTrack({ path, status }: { path: SkillId[]; status: Record<SkillId,
   );
 }
 
-function Lesson({ skill, state, onDone }: { skill: Skill; state: StageProps["state"]; onDone: () => void }) {
+function Lesson({ skill, recap, busy, onDone }: { skill: Skill; recap: NonNullable<LiveView["mission"]>["recap"]; busy?: boolean; onDone: () => void }) {
   const { lesson } = skill;
-  const recap = state.probes.filter((p) => p.skill === skill.id).slice(0, 3);
   return (
     <article className="anim-rise" aria-labelledby="lesson-h">
-      {!state.fast && recap.length > 0 && (
+      {recap.length > 0 && (
         <section className="mb-8" aria-label="What Patch saw">
           <p className="text-sm font-semibold text-faint">What Patch saw</p>
           <ul className="mt-2 grid gap-2">
-            {recap.map((p) => {
-              const q = questionById[p.questionId];
-              const a = state.learner.attempts.find((x) => x.questionId === p.questionId)!;
-              return (
-                <li key={p.questionId} className="flex flex-wrap items-baseline justify-between gap-2 rounded-card bg-ink-900/70 px-4 py-2.5">
-                  <span className="math text-lg">{formatMath(q.text)}</span>
-                  <span className="text-base text-gap">
-                    you chose <span className="math font-semibold">{formatMath(q.options[a.optionIndex].text)}</span>
-                  </span>
-                </li>
-              );
-            })}
+            {recap.map((r) => (
+              <li key={r.text} className="flex flex-wrap items-baseline justify-between gap-2 rounded-card bg-ink-900/70 px-4 py-2.5">
+                <span className="math text-lg">{formatMath(r.text)}</span>
+                <span className="text-base text-gap">
+                  you chose <span className="math font-semibold">{formatMath(r.chosen)}</span>
+                </span>
+              </li>
+            ))}
           </ul>
         </section>
       )}
@@ -200,7 +198,7 @@ function Lesson({ skill, state, onDone }: { skill: Skill; state: StageProps["sta
         {formatMath(lesson.selfCheck)}
       </p>
 
-      <Button size="lg" className="mt-8 w-full sm:w-auto sm:px-10" onClick={onDone}>
+      <Button size="lg" className="mt-8 w-full sm:w-auto sm:px-10" onClick={onDone} loading={busy}>
         I&apos;ve got it. Let&apos;s practise.
       </Button>
     </article>
