@@ -22,22 +22,30 @@ async function answerLive(page: Page) {
   const c = scriptedAnswer(DEMO_STUDENT, q, phase);
   await page.locator("main label").nth(c.optionIndex).click();
   await page.getByRole("button", { name: c.confidence === "sure" ? "I'm sure" : "Guessing" }).click();
-  await expect(page.locator("main [role=status] button")).toBeVisible();
+  await expect(page.locator("main [role=status] button")).toBeEnabled({ timeout: 15_000 });
+}
+
+/** Live answers round-trip to the server: wait for Continue to be ready, click once, wait for it to go. */
+async function clickContinue(page: Page) {
+  const btn = page.locator("main [role=status] button").first();
+  await expect(btn).toBeEnabled({ timeout: 15_000 });
+  await btn.click({ timeout: 15_000 });
+  await btn.waitFor({ state: "detached", timeout: 15_000 }).catch(() => {});
 }
 
 async function stepLive(page: Page) {
   const main = page.locator("main");
-  if (await main.locator("[role=status] button").count()) return main.locator("[role=status] button").first().click();
+  if (await main.locator("[role=status] button").count()) return clickContinue(page);
   if (await main.locator("legend").count()) return answerLive(page);
   for (const name of ["TRACE MY GAP", "Start my Root Gap Mission", "I've got it"]) {
     const b = main.getByRole("button", { name });
-    if ((await b.count()) && (await b.isEnabled())) return b.click();
+    if ((await b.count()) && (await b.isEnabled())) return b.click({ timeout: 15_000 });
   }
   await page.waitForTimeout(400);
 }
 
 test("live class: teacher creates, student joins and plays the full loop, teacher sees it, data is deleted", async ({ browser }) => {
-  test.setTimeout(420_000);
+  test.setTimeout(Number(process.env.LIVE_TIMEOUT ?? 420_000));
   const teacher = await (await browser.newContext()).newPage();
   const student = await (await browser.newContext({ viewport: { width: 375, height: 812 } })).newPage();
 
@@ -109,7 +117,7 @@ test("live class: teacher creates, student joins and plays the full loop, teache
 });
 
 test("live class from uploaded notes: teacher's course is what students play", async ({ browser }) => {
-  test.setTimeout(420_000);
+  test.setTimeout(Number(process.env.LIVE_TIMEOUT ?? 420_000));
   const { learningFixture } = await import("../lib/learning/test-fixture");
   const teacher = await (await browser.newContext()).newPage();
   const student = await (await browser.newContext({ viewport: { width: 375, height: 812 } })).newPage();
@@ -139,7 +147,7 @@ test("live class from uploaded notes: teacher's course is what students play", a
     if (await student.getByText("Open my Knowledge Map").count()) break;
     if (await student.getByText("Root gap confirmed").count()) repaired = true;
     const main = student.locator("main");
-    if (await main.locator("[role=status] button").count()) { await main.locator("[role=status] button").first().click(); continue; }
+    if (await main.locator("[role=status] button").count()) { await clickContinue(student); continue; }
     if (await main.locator("legend").count()) {
       const text = await main.locator("legend span").nth(1).innerText();
       const fail = !repaired && FAIL.some((n) => text.startsWith(n));
@@ -148,13 +156,13 @@ test("live class from uploaded notes: teacher's course is what students play", a
         if ((await labels.nth(j).innerText()).includes("proportion of selected items") !== fail) { await labels.nth(j).click(); break; }
       }
       await student.getByRole("button", { name: "I'm sure" }).click();
-      await expect(main.locator("[role=status] button")).toBeVisible();
+      await expect(main.locator("[role=status] button")).toBeEnabled({ timeout: 15_000 });
       continue;
     }
     let clicked = false;
     for (const name of ["TRACE MY GAP", "Start my Root Gap Mission", "I've got it"]) {
       const b = main.getByRole("button", { name });
-      if ((await b.count()) && (await b.isEnabled())) { await b.click(); clicked = true; break; }
+      if ((await b.count()) && (await b.isEnabled())) { await b.click({ timeout: 15_000 }); clicked = true; break; }
     }
     if (!clicked) await student.waitForTimeout(400);
   }
