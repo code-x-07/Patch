@@ -180,6 +180,17 @@ describe("Gemini pipeline (mocked)", () => {
     expect(f.mock.calls.some(([u]) => String(u).includes("gemini-3.5-flash"))).toBe(true);
   });
 
+  it("rotates to the next API key when one key is out of quota on every model", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "key-one");
+    vi.stubEnv("GEMINI_API_KEYS", "key-two");
+    const base = gemini(() => ({ approved: true, issues: [] }));
+    const f = vi.fn(async (url: string, init: { body: string; headers: Record<string, string> }) =>
+      init.headers["x-goog-api-key"] === "key-one" ? new Response("quota", { status: 429 }) : base(url, init));
+    vi.stubGlobal("fetch", f);
+    await expect(generateCourse(notes)).resolves.toHaveProperty("title");
+    expect(f.mock.calls.some(([, init]) => init.headers["x-goog-api-key"] === "key-two")).toBe(true);
+  });
+
   it("reports quota errors without leaking provider detail", async () => {
     vi.stubEnv("GEMINI_API_KEY", "test-key");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("sensitive provider detail", { status: 429 })));

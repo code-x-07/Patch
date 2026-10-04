@@ -23,9 +23,18 @@ export class GenerationError extends Error {
   constructor(message: string, public status = 502) { super(message); }
 }
 
+const isReal = (k: string) => !!k && !/placeholder|your.*key|replace.*key/i.test(k);
+
+/** All configured Gemini keys: GEMINI_API_KEY plus any in GEMINI_API_KEYS (comma-separated). */
+export function configuredKeys(): string[] {
+  const all = [process.env.GEMINI_API_KEY, ...(process.env.GEMINI_API_KEYS ?? "").split(",")]
+    .map((k) => (k ?? "").trim())
+    .filter(isReal);
+  return [...new Set(all)];
+}
+
 export function configuredKey() {
-  const key = process.env.GEMINI_API_KEY?.trim();
-  return key && !/placeholder|your.*key|replace.*key/i.test(key) ? key : null;
+  return configuredKeys()[0] ?? null;
 }
 
 /** Whole-generation time budget: Vercel Hobby functions stop at 300s, so finish well before. */
@@ -34,30 +43,36 @@ const PER_CALL_MS = 150_000;
 const MIN_CALL_MS = 20_000;
 
 /**
- * Models to try, in order. Each Gemini model has its own quota (the free tier
- * allows only ~20 requests a day per model), so on a quota error the next one
- * is used. GEMINI_MODEL, when set, goes first.
+ * Models to try, in order. On the free tier each model has its own small daily
+ * quota per Google project (~20 requests), so on a quota error the next model
+ * is used, then the next key (each key from a different project adds quota).
+ * GEMINI_MODEL, when set, goes first.
  */
 const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite"];
 const QUOTA_COOLDOWN_MS = 60 * 60 * 1000;
 const exhausted = new Map<string, number>();
 
-function models(): string[] {
-  const list = [...new Set([process.env.GEMINI_MODEL, ...FALLBACK_MODELS].filter(Boolean) as string[])];
-  const available = list.filter((m) => (exhausted.get(m) ?? 0) < Date.now());
-  return available.length ? available : list;
+const keyId = (key: string) => key.slice(-8);
+
+/** Key × model pairs to try, skipping pairs that recently hit their quota. */
+function routes(): { key: string; model: string }[] {
+  const models = [...new Set([process.env.GEMINI_MODEL, ...FALLBACK_MODELS].filter(Boolean) as string[])];
+  const all = configuredKeys().flatMap((key) => models.map((model) => ({ key, model })));
+  const available = all.filter((r) => (exhausted.get(`${keyId(r.key)}:${r.model}`) ?? 0) < Date.now());
+  return available.length ? available : all;
 }
 
 async function generate(notes: Notes, instruction: string, schema: object, signal?: AbortSignal, deadline = Date.now() + PER_CALL_MS) {
+  if (!configuredKeys().length) throw new GenerationError("Add your Gemini API key to GEMINI_API_KEY in .env, then restart the local server.", 503);
   let last: unknown;
-  for (const model of models()) {
+  for (const { key, model } of routes()) {
     try {
-      return await generateWith(model, notes, instruction, schema, signal, deadline);
+      return await generateWith(key, model, notes, instruction, schema, signal, deadline);
     } catch (error) {
       last = error;
-      // Quota/rate limit (429) or model unavailable (404): try the next model.
-      if (error instanceof GenerationError && (error.status === 429 || error.status === 404)) {
-        if (error.status === 429) exhausted.set(model, Date.now() + QUOTA_COOLDOWN_MS);
+      // Quota/rate limit (429), model unavailable (404) or bad key (401/403): try the next route.
+      if (error instanceof GenerationError && [401, 403, 404, 429].includes(error.status)) {
+        if (error.status === 429) exhausted.set(`${keyId(key)}:${model}`, Date.now() + QUOTA_COOLDOWN_MS);
         continue;
       }
       throw error;
@@ -66,13 +81,11 @@ async function generate(notes: Notes, instruction: string, schema: object, signa
   throw last;
 }
 
-async function generateWith(model: string, notes: Notes, instruction: string, schema: object, signal?: AbortSignal, deadline = Date.now() + PER_CALL_MS) {
+async function generateWith(key: string, model: string, notes: Notes, instruction: string, schema: object, signal?: AbortSignal, deadline = Date.now() + PER_CALL_MS) {
   const remaining = deadline - Date.now();
   if (remaining < MIN_CALL_MS) {
     throw new GenerationError("Generating this session is taking too long. Try a narrower objective or shorter notes.", 504);
   }
-  const key = configuredKey();
-  if (!key) throw new GenerationError("Add your Gemini API key to GEMINI_API_KEY in .env, then restart the local server.", 503);
   if (!/^[a-zA-Z0-9._-]+$/.test(model)) throw new GenerationError("GEMINI_MODEL is invalid.", 503);
   let response: Response;
   try {
@@ -127,7 +140,7 @@ async function generateWith(model: string, notes: Notes, instruction: string, sc
       429: "Gemini's quota or rate limit was reached on every available model. Try again later, or enable billing on the Gemini API key for higher limits.",
       503: "Gemini is experiencing high demand after multiple retries. Your file was accepted; please try again shortly.",
     };
-    throw new GenerationError(messages[response.status] ?? "Gemini is temporarily unavailable. Please try again.", response.status === 429 ? 429 : 502);
+    throw new GenerationError(messages[response.status] ?? "Gemini is temporarily unavailable. Please try again.", [401, 403, 404, 429].includes(response.status) ? response.status : 502);
   }
   const body = await response.json();
   const candidate = body.candidates?.[0];
