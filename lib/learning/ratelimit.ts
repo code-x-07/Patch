@@ -4,7 +4,7 @@ import { db, liveConfigured } from "../live/server";
 import { GenerationError } from "./gemini";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const perVisitor = () => Number(process.env.GEMINI_DAILY_LIMIT_PER_VISITOR ?? 5);
+const perVisitor = () => Number(process.env.GEMINI_DAILY_LIMIT_PER_VISITOR ?? 50);
 const global = () => Number(process.env.GEMINI_DAILY_LIMIT_TOTAL ?? 100);
 
 /** Visitor IP as a salted hash, so raw addresses are never stored. */
