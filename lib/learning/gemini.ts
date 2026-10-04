@@ -38,7 +38,7 @@ const MIN_CALL_MS = 20_000;
  * allows only ~20 requests a day per model), so on a quota error the next one
  * is used. GEMINI_MODEL, when set, goes first.
  */
-const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+const FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite"];
 const QUOTA_COOLDOWN_MS = 60 * 60 * 1000;
 const exhausted = new Map<string, number>();
 
