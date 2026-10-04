@@ -57,7 +57,8 @@ const keyId = (key: string) => key.slice(-8);
 /** Key × model pairs to try, skipping pairs that recently hit their quota. */
 function routes(): { key: string; model: string }[] {
   const models = [...new Set([process.env.GEMINI_MODEL, ...FALLBACK_MODELS].filter(Boolean) as string[])];
-  const all = configuredKeys().flatMap((key) => models.map((model) => ({ key, model })));
+  // Best model on every key first (each key = another project's quota), then weaker models.
+  const all = models.flatMap((model) => configuredKeys().map((key) => ({ key, model })));
   const available = all.filter((r) => (exhausted.get(`${keyId(r.key)}:${r.model}`) ?? 0) < Date.now());
   return available.length ? available : all;
 }
@@ -183,8 +184,10 @@ For EACH of those skills write exactly ${PER_SKILL.diagnostic} diagnostic, ${PER
 
 async function generateQuestions(notes: Notes, map: CourseMap, skills: CourseMap["skills"], deadline: number, signal?: AbortSignal, correction = "") {
   const want = new Set(skills.map((s) => s.id));
-  const raw = questionsSchema.parse(await generate(notes, questionsInstruction(map, skills) + correction, z.toJSONSchema(questionsSchema), signal, deadline));
-  return raw.questions.filter((q) => want.has(q.skillId) && (q.kind !== "boss" || q.skillId === map.targetSkillId));
+  const parsed = questionsSchema.safeParse(await generate(notes, questionsInstruction(map, skills) + correction, z.toJSONSchema(questionsSchema), signal, deadline));
+  // A badly shaped answer is treated as "no questions": the group is regenerated once.
+  if (!parsed.success) return [];
+  return parsed.data.questions.filter((q) => want.has(q.skillId) && (q.kind !== "boss" || q.skillId === map.targetSkillId));
 }
 
 /** Stable, collision-free ids: S3-d1, S3-c2, S3-b1, S5-x1 … */
